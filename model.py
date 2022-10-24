@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as TF
 
+# Convolution class containing the kernel size, stride and padding for our conv kernel.
 class DoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(DoubleConv, self).__init__()
@@ -21,9 +22,10 @@ class DoubleConv(nn.Module):
     def forward(self, x):
         return self.conv(x)
 
+# The main UNET class. This class represents the UNET architecture with the input/output channels, features and the downsampling/upsampling part.
 class UNET(nn.Module):
-    def __init__( #CHANGE OUT_CHANNCELS FROM 1 TO AMOUNT OF CLASSES WE NEED
-        self, in_channels=3, out_channels=1, features=[64, 128, 256, 512],
+    def __init__( #CHANGE OUT_CHANNELS FROM 1 TO AMOUNT OF CLASSES WE NEED
+        self, in_channels=3, out_channels=6, features=[64, 128, 256, 512],
 
     ):
         super(UNET, self).__init__()
@@ -52,9 +54,9 @@ class UNET(nn.Module):
     def forward(self, x):
         skip_connections = []
         for down in self.downs:
-            x = down(x)
+            x = down(x) 
             skip_connections.append(x)
-            x = self.pool(x)
+            x = self.pool(x)    #Apply max pooling operation
 
         x = self.bottleneck(x)
         skip_connections = skip_connections[::-1]
@@ -65,7 +67,8 @@ class UNET(nn.Module):
 
             # this does not work atm
             if x.shape != skip_connection.shape:
-                x = TF.Resize(x, size=skip_connection.shape[2:])
+                transform = TF.Resize(size=(skip_connection.shape[2:]))
+                x = transform(x)
 
             concat_skip = torch.cat((skip_connection, x), dim=1)
             x = self.ups[idx+1](concat_skip)
@@ -76,6 +79,7 @@ class UNET(nn.Module):
 def test():
     x = torch.randn((3, 1, 161, 161)) #Number must be correct for it to work
     model = UNET(in_channels=1, out_channels=1)
+    print("Creating UNet model class")
     preds = model(x)
     print(preds.shape)
     print(x.shape)

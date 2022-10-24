@@ -3,6 +3,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 import numpy as np
 
+# This class handles loading the golf dataset
 class GolfDataset(Dataset):
     def __init__(self, image_dir, mask_dir, transform=None):
         self.image_dir = image_dir
@@ -13,7 +14,7 @@ class GolfDataset(Dataset):
     def __len__(self):
         return len(self.images)
 
-
+    # This function loads all of the train images and train masks from their respective folder
     def __getitem__(self, index):
         img_path = os.path.join(self.image_dir, self.images[index])
         #mask_path = os.path.join(self.mask_dir, self.images[index]) #optional is to .replace(".jpg, "_mask.gif")

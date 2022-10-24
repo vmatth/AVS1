@@ -1,4 +1,5 @@
 import torch
+import os
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from tqdm import tqdm
@@ -13,31 +14,39 @@ from utils import (
     save_predictions_as_imgs,
 )
 
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+
 # Hyperparameters etc.
 LEARNING_RATE = 1e-4
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-BATCH_SIZE = 8 #CAN BE CHANGED TO 32
+BATCH_SIZE = 1 #CAN BE CHANGED TO 32
 NUM_EPOCHS = 3 #CAN BE 100
-NUM_WORKERS = 2 
-IMAGE_HEIGHT = 160   # 900 originally
-IMAGE_WIDTH = 240    # 1600 originally
+NUM_WORKERS = 2
+IMAGE_HEIGHT = 80  # 900 originally
+IMAGE_WIDTH = 160    # 1600 originally
 PIN_MEMORY = True
 LOAD_MODEL = False
 TRAIN_IMG_DIR = "data/train_images/"
 TRAIN_MASK_DIR = "data/train_masks/"
 VAL_IMG_DIR = "data/val_images/"
 VAL_MASK_DIR = "data/val_masks/"
+SAVED_IMG_DIR = "data/saved_images/"
 
 def train_fn(loader, model, optimizer, loss_fn, scaler):
+    print("Train function")
     loop = tqdm(loader)
 
+    # Data size is [batches, in_channels, image_height, image_width]
     for batch_idx, (data, targets) in enumerate(loop):
         data = data.to(device=DEVICE)
-        targets = targets.float().unsqueeze(1).to(device=DEVICE)
+        targets = targets.long().to(device=DEVICE)
+        #targets = targets.reshape(BATCH_SIZE, 3, IMAGE_HEIGHT, IMAGE_WIDTH)
 
         #forward
         with torch.cuda.amp.autocast():
             predictions = model(data)
+            print("predictions shape", predictions.shape)
+            print("targets", targets.shape)
             loss = loss_fn(predictions, targets)
 
         #backward
@@ -51,6 +60,7 @@ def train_fn(loader, model, optimizer, loss_fn, scaler):
 
 
 def main():
+    print("Preparing to train data")
     train_transform = A.Compose(
         [
             A.Resize(height=IMAGE_HEIGHT, width=IMAGE_WIDTH),
@@ -80,8 +90,9 @@ def main():
 
 
 
-    model = UNET(in_channels=3, out_channels=1).to(DEVICE)  # change out_channels according to numbers of classes 
-    loss_fn = nn.BCEWithLogitsLoss() # if we have more than one class, change loss function to cross entropy loss
+    model = UNET(in_channels=3, out_channels=6).to(DEVICE)  # change out_channels according to numbers of classes 
+    loss_fn = nn.CrossEntropyLoss()
+    #nn.BCEWithLogitsLoss() # if we have more than one class, change loss function to cross entropy loss
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     train_loader, val_loader = get_loaders(
@@ -98,6 +109,7 @@ def main():
 
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(NUM_EPOCHS):
+        print("Epoch: ", epoch)
         train_fn(train_loader, model, optimizer, loss_fn, scaler)
 
         #Save model
@@ -113,10 +125,9 @@ def main():
         #Check accuracy
         check_accuracy(val_loader, model, device=DEVICE)
 
-
-        #Print examplse to folder
+        #Print examples to folder
         save_predictions_as_imgs(
-            val_loader, model, folder="saved_images/", device=DEVICE
+            val_loader, model, folder=SAVED_IMG_DIR, device=DEVICE
         )
 
 
