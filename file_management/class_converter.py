@@ -6,25 +6,18 @@ import sys
 import numpy
 from tqdm import tqdm
 
-# Converts the segmentation masks (3 channels RGB) to a class mask (1 channel [0-5])
+# This file converts segmentation masks (3 channels RGB) to a class mask (1 channel with values from 0-5 representing each class).
+# The files are loaded from the folder specified.
+# The files are outputted to the current location in the terminal.
 
-def load_images(folder):
-    print("Loading images")
-    #load and loop data
-    images = []
-    for filename in os.listdir(folder):
-        img = cv2.imread(os.path.join(folder,filename))
-        if img is not None:
-            images.append(img)
-    print("Done")
-    return images
+PATH = 'C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\2. segmentation masks\\'
 
 def main():
 
-    images = [open(file, "rb") for file in glob.glob(u'C:\\Users\\Vini\\Desktop\\Data_10_images\\*.png')]
+    images = [open(file, "rb") for file in glob.glob(PATH+'*.png')]
 
     #Loop all images
-    counter = 0
+    counter = 1
     for i in tqdm(images):
         print(" Converting picture", counter)
         #Do some magic to open the images as we have 'ae oe aa'
@@ -59,7 +52,7 @@ def main():
         #Bunkers | 236
 
         #Save image
-        img_name = i.name.replace('C:\\Users\\Vini\\Desktop\\Data_10_images\\', ' ')
+        img_name = i.name.replace(PATH, ' ')
         cv2.imwrite(img_name, img)
 
         counter = counter + 1

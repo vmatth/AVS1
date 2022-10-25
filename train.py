@@ -20,7 +20,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 LEARNING_RATE = 1e-4
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 1 #CAN BE CHANGED TO 32
-NUM_EPOCHS = 3 #CAN BE 100
+NUM_EPOCHS = 20 #CAN BE 100
 NUM_WORKERS = 2
 IMAGE_HEIGHT = 80  # 900 originally
 IMAGE_WIDTH = 160    # 1600 originally
@@ -33,20 +33,15 @@ VAL_MASK_DIR = "data/val_masks/"
 SAVED_IMG_DIR = "data/saved_images/"
 
 def train_fn(loader, model, optimizer, loss_fn, scaler):
-    print("Train function")
     loop = tqdm(loader)
 
     # Data size is [batches, in_channels, image_height, image_width]
     for batch_idx, (data, targets) in enumerate(loop):
         data = data.to(device=DEVICE)
         targets = targets.long().to(device=DEVICE)
-        #targets = targets.reshape(BATCH_SIZE, 3, IMAGE_HEIGHT, IMAGE_WIDTH)
-
         #forward
         with torch.cuda.amp.autocast():
             predictions = model(data)
-            print("predictions shape", predictions.shape)
-            print("targets", targets.shape)
             loss = loss_fn(predictions, targets)
 
         #backward
@@ -109,7 +104,8 @@ def main():
 
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(NUM_EPOCHS):
-        print("Epoch: ", epoch)
+        print("-------------------------------------")
+        print("Epoch: ", epoch + 1)
         train_fn(train_loader, model, optimizer, loss_fn, scaler)
 
         #Save model
