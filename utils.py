@@ -1,4 +1,5 @@
 from cmath import isnan
+from functools import cache
 import torch
 import torchvision
 from dataset import GolfDataset
@@ -6,13 +7,19 @@ from torch.utils.data import DataLoader
 import cv2
 import numpy as np
 import math
+from torch.utils.tensorboard import SummaryWriter
+import torch.nn as nn
 
-BATCH_SIZE = 1 #CAN BE CHANGED TO 32
 
+# BATCH_SIZE = 1 #CAN BE CHANGED TO 32
+# BATCH_SIZE = get_loaders()
 
 def save_checkpoint(state, filename="my_checkpoint.pth.tar"):
     #print("=> Saving checkpoint :)")
-    torch.save(state, filename)
+    try:
+        torch.save(state, filename)
+    except:
+        print("Could not save checkpoint")
 
 
 def load_checkpoint(checkpoint, model):
@@ -64,8 +71,8 @@ def get_loaders(
     return train_loader, val_loader
 
 
-def check_accuracy(loader, model, device="cuda"):
-    print("Calculating Accuracy")
+def check_accuracy(loader, model, epoch, loss_fn, writer, device="cuda"):
+    print("Calculating IoU")
     model.eval()
 
     IoU_fairways = []
@@ -74,14 +81,17 @@ def check_accuracy(loader, model, device="cuda"):
     IoU_bunkers = []
     IoU_waters = []   
 
+    losses = []
     with torch.no_grad():
         for x,y in loader:
             x = x.to(device)
             y = y.to(device)
             preds = model(x)
 
+            #Calculate loss here
+            loss = loss_fn(preds, y.long())
+            losses.append(loss.item())
             _, tags = torch.max(preds, dim = 1)
-
             #Calculate accuracy of each class using TP FP and FN
             #Classes | 0: Background | 1: Fairway | 2: Green | 3: Tees | 4: Bunkers | 5: Water |
 
@@ -106,24 +116,30 @@ def check_accuracy(loader, model, device="cuda"):
             IoU_bunkers.append(IoU_bunker)
             IoU_waters.append(IoU_water)
             
+
         mean_IoU_fairways = np.mean(IoU_fairways)
         mean_IoU_greens = np.mean(IoU_greens)
         mean_IoU_tees = np.mean(IoU_tees)
         mean_IoU_bunkers = np.mean(IoU_bunkers)
         mean_IoU_waters = np.mean(IoU_waters)
         
-        print("Fairway accuracy: ", mean_IoU_fairways, "%")
-        print("Green accuracy: ", mean_IoU_greens, "%")
-        print("Tee accuracy: ", mean_IoU_tees, "%")
-        print("Bunker accuracy: ", mean_IoU_bunkers, "%")
-        print("Water accuracy: ", mean_IoU_waters, "%")
+        print("     Fairway IoU: ", mean_IoU_fairways, "%")
+        print("     Green IoU: ", mean_IoU_greens, "%")
+        print("     Tee IoU: ", mean_IoU_tees, "%")
+        print("     Bunker IoU: ", mean_IoU_bunkers, "%")
+        print("     Water IoU: ", mean_IoU_waters, "%")
+
+        mean_loss = np.mean(losses)
+        print("Validation Loss: ", mean_loss)
+        writer.add_scalar("Loss/val", mean_loss, epoch)
+        writer.close()
 
     model.train()
 
 def save_predictions_as_imgs(
-    loader, model, folder="data/saved_images/", device="cuda"
+    loader, model, batch_size, folder="data/saved_images/", device="cuda"
 ):
-    print("Validating model")
+    print("Saving validation images")
     model.eval()
     for idx, (x, y) in enumerate(loader):
         x = x.to(device=device)
@@ -137,15 +153,16 @@ def save_predictions_as_imgs(
             # preds = (preds > 0.5).float()
         #Classes | 0: Background | 1: Fairway | 2: Green | 3: Tees | 4: Bunkers | 5: Water |
         class_to_color = [torch.tensor([0.0, 0.0, 0.0], device='cuda'), torch.tensor([0.0, 140.0/255, 0.0],  device='cuda'), torch.tensor([0.0, 255.0/255, 0.0],  device='cuda'), torch.tensor([255.0/255, 0.0, 0.0],  device='cuda'), torch.tensor([217.0/255, 230.0/255, 122.0/255],  device='cuda'), torch.tensor([7.0/255, 15.0/255, 247.0/255],  device='cuda')]
-        output = torch.zeros(BATCH_SIZE, 3, preds.size(-2), preds.size(-1), dtype=torch.float,  device='cuda')
+        output = torch.zeros(preds.shape[0], 3, preds.size(-2), preds.size(-1), dtype=torch.float,  device='cuda') #Output size is set to preds.shape[0] to avoid there not being enough val images left for the batches
         for class_idx, color in enumerate(class_to_color):
             mask = preds[:,class_idx,:,:] == torch.max(preds, dim=1)[0]
             mask = mask.unsqueeze(1)
             curr_color = color.reshape(1, 3, 1, 1)
             segment = mask*curr_color 
             output += segment
+        
 
-        y_output = torch.zeros(BATCH_SIZE, 3, preds.size(-2), preds.size(-1), dtype=torch.float,  device='cuda')
+        y_output = torch.zeros(y.shape[0], 3, preds.size(-2), preds.size(-1), dtype=torch.float,  device='cuda')
         for class_idx, color in enumerate(class_to_color):
             mask = y[:,:,:] == class_idx
             mask = mask.unsqueeze(1)
@@ -155,10 +172,9 @@ def save_predictions_as_imgs(
             y_output += segment
 
 
-        torchvision.utils.save_image(
-            output, f"{folder}/Prediction_{idx+1}.png"
-        )
-        torchvision.utils.save_image(y_output, f"{folder}/Ground_Truth_{idx+1}.png")
+        #Save images to our saved_images folder
+        torchvision.utils.save_image(output, f"{folder}/{idx+1}_prediction.png")
+        torchvision.utils.save_image(y_output, f"{folder}/{idx+1}_groundtruth.png")
 
     model.train()
 
