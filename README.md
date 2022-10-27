@@ -2,7 +2,7 @@
 
 This repository contains our implementation of the UNet architecture for semantic segmentation in golf courses.
 
-##Files
+## Files
 
 dataset.py handles all the loading of data.
 
@@ -14,7 +14,7 @@ utils.py is used for checking accuracy, saving prediction images and load/saving
 
 The folder 'file_management' contains python files for managing our images and masks.
 
-##Tensorboard
+## Tensorboard
 Tensorboard is used to visualize the train loss and validation loss.
 It can be opened using the following command:
 ```
