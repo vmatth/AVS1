@@ -75,16 +75,5 @@ class UNET(nn.Module):
 
         return self.final_conv(x)   # torch.sigmoid(x) if we want to use sigmoid instead 
 
-
-def test():
-    x = torch.randn((3, 1, 161, 161)) #Number must be correct for it to work
-    model = UNET(in_channels=1, out_channels=1)
-    print("Creating UNet model class")
-    preds = model(x)
-    print(preds.shape)
-    print(x.shape)
-    assert preds.shape == x.shape
-
 if __name__ == "__main__":
     print("hej jepp")
-    test()

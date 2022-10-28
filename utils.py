@@ -1,5 +1,3 @@
-from cmath import isnan
-from functools import cache
 import torch
 import torchvision
 from dataset import GolfDataset
@@ -9,22 +7,51 @@ import numpy as np
 import math
 from torch.utils.tensorboard import SummaryWriter
 import torch.nn as nn
-
+import segmentation_models_pytorch as smp
 
 # BATCH_SIZE = 1 #CAN BE CHANGED TO 32
 # BATCH_SIZE = get_loaders()
 
-def save_checkpoint(state, filename="my_checkpoint.pth.tar"):
-    #print("=> Saving checkpoint :)")
+class save_best_model:
+    def __init__(self, best_valid_loss=float("inf")):
+        self.best_valid_loss = best_valid_loss
+        self.best_valid_loss_epoch = float("inf")
+
+    def __call__(self, current_valid_loss, epoch, model, optimizer, loss_fn):
+        print(f"Current Best Validation Loss: ({self.best_valid_loss})", f"at epoch [{self.best_valid_loss_epoch}]")
+        if current_valid_loss < self.best_valid_loss:
+            self.best_valid_loss = current_valid_loss
+            self.best_valid_loss_epoch = epoch
+            print(f"New Best Validation Loss: ({self.best_valid_loss})", f"at epoch [{self.best_valid_loss_epoch}]")
+            torch.save({
+                "epoch": epoch+1,
+                "model_state_dict": model.state_dict(),
+                "optimer_state_dict": optimizer.state_dict(),
+                "loss": loss_fn,
+                }, "saved_models/best_model.pth.tar")
+
+
+def save_checkpoint(state, filename):
     try:
+        print("Saving Checkpoint")
         torch.save(state, filename)
     except:
-        print("Could not save checkpoint")
+        print("Saving Checkpoint Failed")
 
 
-def load_checkpoint(checkpoint, model):
-    print("=> Loading checkpoint :)")
-    model.load_state_dict(checkpoint["state_dict"])
+def load_checkpoint(PATH, model, optimizer):
+    try:
+        print("Loading checkpoint")
+        checkpoint = torch.load(PATH)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        loaded_epoch = checkpoint['epoch']
+        print("     Successfully Loaded at Epoch: ", loaded_epoch)
+        model.eval()
+        return model, optimizer, loaded_epoch
+    except:
+        print("     Loading Checkpoint Failed")
+        return model, optimizer, 0
 
 
 def get_loaders(  
@@ -35,7 +62,7 @@ def get_loaders(
     batch_size,
     train_transform,
     val_transform,
-    num_workers=4,
+    num_workers,
     pin_memory=True,
 ):
 
@@ -135,6 +162,7 @@ def check_accuracy(loader, model, epoch, loss_fn, writer, device="cuda"):
         writer.close()
 
     model.train()
+    return mean_loss
 
 def save_predictions_as_imgs(
     loader, model, batch_size, folder="data/saved_images/", device="cuda"
@@ -153,7 +181,7 @@ def save_predictions_as_imgs(
             # preds = (preds > 0.5).float()
         #Classes | 0: Background | 1: Fairway | 2: Green | 3: Tees | 4: Bunkers | 5: Water |
         class_to_color = [torch.tensor([0.0, 0.0, 0.0], device='cuda'), torch.tensor([0.0, 140.0/255, 0.0],  device='cuda'), torch.tensor([0.0, 255.0/255, 0.0],  device='cuda'), torch.tensor([255.0/255, 0.0, 0.0],  device='cuda'), torch.tensor([217.0/255, 230.0/255, 122.0/255],  device='cuda'), torch.tensor([7.0/255, 15.0/255, 247.0/255],  device='cuda')]
-        output = torch.zeros(preds.shape[0], 3, preds.size(-2), preds.size(-1), dtype=torch.float,  device='cuda') #Output size is set to preds.shape[0] to avoid there not being enough val images left for the batches
+        output = torch.zeros(preds.shape[0], 3, preds.size(-2), preds.size(-1), dtype=torch.float,  device='cuda') #Output size is set to preds.shape[0] as the size automatically changes to fit the remaining batch_size.
         for class_idx, color in enumerate(class_to_color):
             mask = preds[:,class_idx,:,:] == torch.max(preds, dim=1)[0]
             mask = mask.unsqueeze(1)
