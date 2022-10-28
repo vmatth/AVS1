@@ -20,8 +20,7 @@ class GolfDataset(Dataset):
         #mask_path = os.path.join(self.mask_dir, self.images[index]) #optional is to .replace(".jpg, "_mask.gif")
         mask_path = os.path.join(self.mask_dir, self.images[index].replace(".jpg", ".png"))
         image = np.array(Image.open(img_path).convert("RGB")) 
-        mask = np.array(Image.open(mask_path).convert("L"), dtype=np.float32) #L for Grayscale, maybe use RGB instead?
-        mask[mask == 255.0] = 1.0 #Changes the white colors (255) to 1.0 to use a sigmoid function - this can change depending on our colors
+        mask = np.array(Image.open(mask_path).convert("L"), dtype=np.float32) #L for Grayscale.
 
         if(self.transform is not None):
             augmentations = self.transform(image=image, mask=mask)

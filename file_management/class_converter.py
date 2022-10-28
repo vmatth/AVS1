@@ -11,6 +11,7 @@ from tqdm import tqdm
 # The files are outputted to the current location in the terminal.
 
 PATH = 'C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\2. segmentation masks\\'
+PATH = "C:\\Users\\Vini\\Desktop\\SegmentationClass\\"
 
 def main():
 

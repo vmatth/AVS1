@@ -122,7 +122,6 @@ def main():
 
 
     # Create the UNet model
-
     model = smp.Unet(
         encoder_name=ENCODER_NAME,
         encoder_weights=ENCODER_WEIGHTS,
