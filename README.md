@@ -47,3 +47,6 @@ pip install tensorboard
 If you need to unzip the image folders you can use:
 
 https://iq.direct/blog/49-how-to-unzip-file-on-ubuntu-linux.html
+
+GPU-support for strato (bottom of page)
+https://www.strato-docs.claaudia.aau.dk/guides/Image-guides/ubuntu/ubuntu_20-04/
