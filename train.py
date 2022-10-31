@@ -8,7 +8,6 @@ import numpy as np
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 import segmentation_models_pytorch as smp
-import matplotlib.pyplot as plt
 from model import UNET
 from utils import (
     load_checkpoint,
@@ -41,11 +40,12 @@ SAVE_CHECKPOINT = True
 ACTIVATION = "softmax2d"
 ENCODER_NAME = "resnet152"
 ENCODER_WEIGHTS="imagenet"
-# Directories
-TRAIN_IMG_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\train_images\\"
-TRAIN_MASK_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\train_masks\\"
-VAL_IMG_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\val_images\\"
-VAL_MASK_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\val_masks\\"
+# Directoriespwd
+
+TRAIN_IMG_DIR = "../train_images/"
+TRAIN_MASK_DIR = "../train_masks/"
+VAL_IMG_DIR = "../val_images/"
+VAL_MASK_DIR = "../val_masks/"
 SAVED_IMG_DIR = "data/saved_images/"
 CHECKPOINT_DIR = "saved_models/my_checkpoint.pth.tar"
 
