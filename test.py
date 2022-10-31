@@ -8,7 +8,6 @@ import numpy as np
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 import segmentation_models_pytorch as smp
-import matplotlib.pyplot as plt
 from model import UNET
 from utils import (
     load_checkpoint,
