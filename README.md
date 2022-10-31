@@ -50,3 +50,8 @@ https://iq.direct/blog/49-how-to-unzip-file-on-ubuntu-linux.html
 
 GPU-support for strato (bottom of page)
 https://www.strato-docs.claaudia.aau.dk/guides/Image-guides/ubuntu/ubuntu_20-04/
+
+Run the train.py file
+```
+/usr/bin/python3 /home/ubuntu/AVS1/train.py
+```
