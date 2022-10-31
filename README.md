@@ -20,3 +20,38 @@ It can be opened using the following command:
 ```
 tensorboard --logdir=tensorboard
 ```
+
+## Setting up Strato
+```
+sudo apt install python3.9
+```
+```
+sudo apt install python3-pip
+```
+```
+pip install numpy
+```
+```
+pip3 install torch torchvision
+```
+```
+pip install -U albumentations
+```
+```
+pip install segmentation-models-pytorch
+```
+```
+pip install tensorboard
+```
+
+If you need to unzip the image folders you can use:
+
+https://iq.direct/blog/49-how-to-unzip-file-on-ubuntu-linux.html
+
+GPU-support for strato (bottom of page)
+https://www.strato-docs.claaudia.aau.dk/guides/Image-guides/ubuntu/ubuntu_20-04/
+
+Run the train.py file
+```
+/usr/bin/python3 /home/ubuntu/AVS1/train.py
+```
