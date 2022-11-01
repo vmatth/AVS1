@@ -98,6 +98,24 @@ def get_loaders(
 
     return train_loader, val_loader
 
+def get_test(
+    test_dir,
+    test_maskdir,
+    num_workers,
+    test_transform,
+    pin_memory=True 
+):
+    test_ds = GolfDataset( 
+        image_dir=test_dir,
+        mask_dir=test_maskdir,
+        transform=test_transform)
+    test_loader= DataLoader(
+        test_ds,
+        batch_size=1,
+        shuffle=False, 
+        num_workers=num_workers,
+        pin_memory=pin_memory)
+    return test_loader
 
 # Calculates the Intersection over Union of prediction (tags) compared to the ground truth (mask)
 def calc_IoU(tags, mask):
@@ -209,10 +227,79 @@ def check_accuracy(loader, model, epoch, loss_fn, writer, device="cuda"):
     model.train()
     return mean_loss
 
-def save_predictions_as_imgs(
-    loader, model, batch_size, folder="data/saved_images/", device="cuda"
+def check_test_accuracy(
+    loader, model, loss_fn, device="cuda"
 ):
-    print("Saving validation images")
+    print(5*"-" + "Calculating Test Accuracy" + 5*"-")
+    model.eval()
+    IoU_fairways, IoU_greens, IoU_tees, IoU_bunkers, IoU_waters = ([] for _ in range(5))   
+    sens_fairways, sens_greens, sens_tees, sens_bunkers, sens_waters = ([] for _ in range(5))
+    
+    losses=[]
+    with torch.no_grad():
+        for x,y in loader:
+            x = x.to(device)
+            y = y.to(device)
+            preds = model(x)
+            #Calculate loss here
+            loss = loss_fn(preds, y.long())
+            losses.append(loss.item())
+            _, tags = torch.max(preds, dim = 1)
+            
+            #Calculate IoU, Sensitivity and
+            IoU_fairway, IoU_green, IoU_tee, IoU_bunker, IoU_water = calc_IoU(tags, y)
+            sens_fairway, sens_green, sens_tee, sens_bunker, sens_water = calc_sensitivity(tags, y)
+
+            #Append to list to calculate the mean of a list using np.mean
+            IoU_fairways.append(IoU_fairway)
+            IoU_greens.append(IoU_green)
+            IoU_tees.append(IoU_tee)
+            IoU_bunkers.append(IoU_bunker)
+            IoU_waters.append(IoU_water)
+            
+            sens_fairways.append(sens_fairway)
+            sens_greens.append(sens_green)
+            sens_tees.append(sens_tee)
+            sens_bunkers.append(sens_bunker)
+            sens_waters.append(sens_water)
+
+        mean_IoU_fairways = np.mean(IoU_fairways)
+        mean_IoU_greens = np.mean(IoU_greens)
+        mean_IoU_tees = np.mean(IoU_tees)
+        mean_IoU_bunkers = np.mean(IoU_bunkers)
+        mean_IoU_waters = np.mean(IoU_waters)
+
+        mean_sens_fairways = np.mean(sens_fairways)
+        mean_sens_greens = np.mean(sens_greens)
+        mean_sens_tees = np.mean(sens_tees)
+        mean_sens_bunkers = np.mean(sens_bunkers)
+        mean_sens_waters = np.mean(sens_waters)
+
+        print("     Fairway IoU: ", mean_IoU_fairways, "%")
+        print("     Green IoU: ", mean_IoU_greens, "%")
+        print("     Tee IoU: ", mean_IoU_tees, "%")
+        print("     Bunker IoU: ", mean_IoU_bunkers, "%")
+        print("     Water IoU: ", mean_IoU_waters, "%")
+
+        print("         Fairway Sensitivity: ", mean_sens_fairways, "%")
+        print("         Green Sensitivity: ", mean_sens_greens, "%")
+        print("         Tee Sensitivity: ", mean_sens_tees, "%")
+        print("         Bunker Sensitivity: ", mean_sens_bunkers, "%")
+        print("         Water Sensitivity: ", mean_sens_waters, "%")
+
+        mean_loss = np.mean(losses)
+        print("Testing Loss: ", mean_loss)
+
+    return 1
+
+def save_predictions_as_imgs(
+    loader, model, batch_size, folder="data/saved_images/", device="cuda",testing=False
+):
+    if not testing:
+        print("Saving validation images")
+    else :
+        print("Saving testing images")
+    
     model.eval()
     for idx, (x, y) in enumerate(loader):
         x = x.to(device=device)
@@ -246,10 +333,12 @@ def save_predictions_as_imgs(
 
 
         #Save images to our saved_images folder
-        torchvision.utils.save_image(output, f"{folder}{idx+1}_prediction.png")
-        torchvision.utils.save_image(y_output, f"{folder}{idx+1}_groundtruth.png")
-
-    model.train()
+        torchvision.utils.save_image(output, f"{folder}/{idx+1}_prediction.png")
+        torchvision.utils.save_image(y_output, f"{folder}/{idx+1}_groundtruth.png")
+    
+    if not testing:
+        model.train()
+    
 
 
 

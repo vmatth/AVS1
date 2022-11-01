@@ -18,8 +18,6 @@ from utils import (
     save_best_model
 )
 
-
-
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 # Hyperparameters etc.
@@ -27,8 +25,8 @@ LEARNING_RATE = 1e-4
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # Settings for the image
 BATCH_SIZE = 16 
-NUM_EPOCHS = 100 
-NUM_WORKERS = 2
+NUM_EPOCHS = 20
+NUM_WORKERS = 4 
 IMAGE_HEIGHT =  256 # 900 originally
 IMAGE_WIDTH = 416   # 1600 originally
 PIN_MEMORY = True
@@ -40,19 +38,16 @@ SAVE_CHECKPOINT = True
 ACTIVATION = "softmax2d"
 ENCODER_NAME = "resnet152"
 ENCODER_WEIGHTS="imagenet"
-# Directoriespwd
-
-TRAIN_IMG_DIR = "../train_images/"
-TRAIN_MASK_DIR = "../train_masks/"
-VAL_IMG_DIR = "../val_images/"
-VAL_MASK_DIR = "../val_masks/"
-SAVED_IMG_DIR = "data/saved_images/"
+# Directories
+TRAIN_IMG_DIR = "/home/ubuntu/project/data/train_images"
+TRAIN_MASK_DIR = "../data/train_masks/"
+VAL_IMG_DIR = "../data/val_images/"
+VAL_MASK_DIR = "../data/val_masks/"
+SAVED_IMG_DIR = "../data/saved_images/"
 CHECKPOINT_DIR = "saved_models/my_checkpoint.pth.tar"
-
 
 def train_fn(loader, model, optimizer, loss_fn, scaler):
     loop = tqdm(loader)
-
     losses = []
 
     # Data size is [batches, in_channels, image_height, image_width]
