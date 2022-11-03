@@ -25,7 +25,7 @@ LEARNING_RATE = 1e-4
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # Settings for the image
 BATCH_SIZE = 16 
-NUM_EPOCHS = 20
+NUM_EPOCHS = 50
 NUM_WORKERS = 4 
 IMAGE_HEIGHT =  256 # 900 originally
 IMAGE_WIDTH = 416   # 1600 originally
@@ -39,11 +39,11 @@ ACTIVATION = "softmax2d"
 ENCODER_NAME = "resnet152"
 ENCODER_WEIGHTS="imagenet"
 # Directories
-TRAIN_IMG_DIR = "/home/ubuntu/project/data/train_images"
-TRAIN_MASK_DIR = "../data/train_masks/"
-VAL_IMG_DIR = "../data/val_images/"
-VAL_MASK_DIR = "../data/val_masks/"
-SAVED_IMG_DIR = "../data/saved_images/"
+TRAIN_IMG_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\train_images\\" # "/home/ubuntu/project/data/train_images"
+TRAIN_MASK_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\train_masks\\" #"../data/train_masks/"
+VAL_IMG_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\val_images\\" 
+VAL_MASK_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\val_masks\\" 
+SAVED_IMG_DIR = "data/saved_images/"
 CHECKPOINT_DIR = "saved_models/my_checkpoint.pth.tar"
 
 def train_fn(loader, model, optimizer, loss_fn, scaler):
@@ -117,6 +117,7 @@ def main():
 
 
     # Create the UNet model
+    # Transfer learning model
     model = smp.Unet(
         encoder_name=ENCODER_NAME,
         encoder_weights=ENCODER_WEIGHTS,
@@ -125,7 +126,8 @@ def main():
         activation=ACTIVATION,
     ).to(DEVICE)
 
-    #model = UNET(in_channels=3, out_channels=6).to(DEVICE)  # change out_channels according to numbers of classes 
+    # No transfer learning model
+    #model = UNET(in_channels=3, out_channels=6).to(DEVICE)
 
     # Loss function and optimizer
     loss_fn = nn.CrossEntropyLoss() #CrossEntropyLoss for multi-class segmentation
@@ -150,7 +152,7 @@ def main():
     )
 
     # Setup tensorboard for visualizing the train loss and validation loss
-    writer = SummaryWriter('tensorboard/')
+    writer = SummaryWriter("tensorboard/")
     
     scaler = torch.cuda.amp.GradScaler()
     # Loop all epochs and train
