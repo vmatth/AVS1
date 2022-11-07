@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 def get_class_coords(image):
     #fairway_list, green_list, tee_list, bunker_list, water_list = ([] for _ in range(5))
@@ -32,6 +33,7 @@ def get_class_coords(image):
             if value_x[0]==7 and value_x[1]==15 and value_x[2]==247:
                 water_list.append((x,y))
     '''
+
     # print("fair: ", len(fairway_list))
     # print("green: ", len(green_list))
     # print("tee: ", len(tee_list))
