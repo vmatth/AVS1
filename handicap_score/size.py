@@ -5,8 +5,8 @@ import numpy as np
 from get_classes import get_class_coords
 import convert
 
-def get_green_size(image, image_px_size, scale=1000):
-    _, _, _, green, _ = get_class_coords(image, colors='cvat')
+def get_green_size(image, image_px_size, scale=1000, color='unet'):
+    _, _, _, green, _ = get_class_coords(image, color)
 
     #The test image only contains 1 green. Thus we can calculate the size like this
     green_pxs = np.sum(green == 255)
@@ -14,8 +14,8 @@ def get_green_size(image, image_px_size, scale=1000):
   
     return green_m2
 
-def get_bunker_size(image, image_px_size, scale=1000):
-    _, _, _, _, bunker = get_class_coords(image, colors='cvat')
+def get_bunker_size(image, image_px_size, scale=1000, color='unet'):
+    _, _, _, _, bunker = get_class_coords(image)
 
     #The test image can contain multiple bunkers. We therefore have to calculate the size for each bunker using contours
     contours, _ = cv2.findContours(bunker, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
