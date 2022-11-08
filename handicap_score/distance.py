@@ -54,16 +54,3 @@ def distance_to_objects(image, point, max_distance=50, color='unet'):
     print(f'Bunkers: {bunker_dists}')
     print(f'Waters: {water_dists}')
     return bunker_dists, water_dists
-
-    
-
-IMG = '../data/herning_1000_005.png'
-img = cv2.imread(IMG)
-
-POINT = np.array([50, 800])
-
-distance_to_objects(img, POINT, color='cvat')
-   
-
-
-
