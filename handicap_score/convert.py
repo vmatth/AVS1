@@ -1,30 +1,20 @@
 import numpy as np
+import math
 
-# Calculates the dpi for the new image (as the new image is resized from the original 1600x900)
-def get_dpi(image_shape):
-    #print("-----Calculating dpi-----")
-    #print("image shape", image_shape)
-    ratio = 1600 / image_shape[1] #Calculates the ratio between this image's size and the original image's size which is (1600 x 900).
-    dpi = 1200 / ratio # Calculate the dpi for the image.
-    print("dpi: ", dpi)
-    return dpi
+def get_px_side(image_shape):
+    one_px = 2.54 / 120 # dpi: 120 px on 1 inch (2.54 cm)
+    og_area = one_px ** 2 * 1600 * 900 # original width: 1600, original height: 900
+    new_area_px = image_shape[0] * image_shape[1]
+    new_one_px = math.sqrt(og_area / new_area_px) # The length of the pixel side in cm
+    return new_one_px
 
 # Converts pixels to meters.
-def convert_px_to_m(pixels, image_shape): #axis=0 is width, axis=1 is height
-    dpi_pixels = get_dpi(image_shape) #calculates the dpi using the new image shape
-    scale = 1000
-    ratio = pixels/dpi_pixels
-    #print("ratio ", ratio)
-    ten_inches_in_cm = 25.4
-    cm_per_px = ratio * ten_inches_in_cm 
-    cm = cm_per_px * scale
-    #print("cm ", cm)
-    m = cm / 100
-    print("Converted from: ", pixels, " pixels to meters: ", m)
-    return m
+def convert_px_to_m(px_size, px_num, scale=1000):
+    return px_size * px_num * scale / 100
 
-# Calculates the distance between 
+def convert_to_m2(px_size, px_num, scale=1000):
+    return px_size**2 * px_num * scale**2 / (100**2)
+
+# Calculates the distanconvert_to_m2ce between 
 def calculate_distance_between_two_points(a, b, image_shape):
     return convert_px_to_m(np.linalg.norm(a - b), image_shape)
-
-
