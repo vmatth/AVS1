@@ -4,97 +4,115 @@ import math
 import cv2
 import matplotlib.pyplot as plt
 from get_classes import get_class_coords
+import convert
+from click import get_click_coords
+import draw_elipse
 
-def scracth_m(scale):
-    dpi_scale = 1200
-    stroke_dist = 250
-    stroke_dist_cm=stroke_dist*100
-    stroke_descale=stroke_dist_cm/(scale*2)
-    stroke_dist_s_m_px=stroke_descale*dpi_scale/25.4
-    print("stroke: ", stroke_dist_s_m_px)
 
-    return stroke_dist_s_m_px
+def get_stroke_lengths(image_shape):
+    # scratch_m: 250y, scratch_F: 210y, bogey_m: 200y, bogey_f: 150y
+    stroke_lenghts = [250, 210, 190, 150]
+    stroke_dists_px = []
+    px_length_cm = convert.get_px_side(image_shape)
+
+    for lenghts in stroke_lenghts:
+        lenghts = convert.convert_yards_to_m(lenghts)
+        stroke_dists_px.append(int(convert.convert_m_to_px(px_length_cm, lenghts)))
+
+    # scratch_m: 230y, scratch_F: 190y, bogey_m: 180y, bogey_f: 130y
+    carry_lenghts = [230, 190, 180, 130]
+    carry_dists_px = []
+
+    for lenghts in carry_lenghts:
+        lenghts = convert.convert_yards_to_m(lenghts)
+        carry_dists_px.append(int(convert.convert_m_to_px(px_length_cm, lenghts)))
     
 
-def scracth_f(scale):
-    dpi_scale = 1200
-    stroke_dist = 210
-    stroke_dist_cm=stroke_dist*100
-    stroke_descale=stroke_dist_cm/(scale*2)
-    stroke_dist_s_f_px=stroke_descale*dpi_scale/25.4
-    print("stroke: ", stroke_dist_s_f_px)
 
-def bogey_m(scale):
-    dpi_scale = 1200
-    stroke_dist = 200
-    stroke_dist_cm=stroke_dist*100
-    stroke_descale=stroke_dist_cm/(scale*2)
-    stroke_dist_b_m_px=stroke_descale*dpi_scale/25.4
-    print("stroke: ", stroke_dist_b_m_px)
-
-
-def bogey_f(scale):
-    dpi_scale = 1200
-    stroke_dist = 150
-    stroke_dist_cm=stroke_dist*100
-    stroke_descale=stroke_dist_cm/(scale*2)
-    stroke_dist_b_f_px=stroke_descale*dpi_scale/25.4
-    print("stroke: ", stroke_dist_b_f_px)
-
-def draw_elipse(image, laning_zone, stroke_dist):
+    return stroke_dists_px, carry_dists_px
     
-    
-    
-    
-    pass
 
-def calc_intersection(class_, centerpoint, stroke_dist):
-    intersection = []
-    print("centerpoint: ", centerpoint[0])
-    print("storke dist: ", stroke_dist)
-    for point in class_:
-        #print("points:", point)
-        if (math.sqrt((centerpoint[0]- point[0])**2+(centerpoint[1]-point[1])**2)) == int(stroke_dist):
-            intersection.append(point)
-            print("HHEHEHEHHEHE")
-    print("intersection: ", intersection)
-    return intersection 
+def calc_fairway_width(class_, centerpoint, stroke_dist, image_shape):
+    # add try except function
+    try:
+        intersection = []
+        edge_points = []
+        for point in class_:
+            # Check if distance from the tee to the fairway is the same as the stroke lenght
+            if (int(math.sqrt((centerpoint[0]-point[0][0])**2+(centerpoint[1]-point[0][1])**2))) == int(stroke_dist):
+                intersection.append(point)
+
+        # Get landing zone coordinates
+        landing_zone = intersection[int(len(intersection)/2)]
+        
+        # Calculate width of the fairway
+        edge_points.append(intersection[0])
+        edge_points.append(intersection[-1])
+
+        fairway_width = math.sqrt((edge_points[1][0][0]- edge_points[0][0][0])**2+(edge_points[1][0][1]-edge_points[0][0][1])**2)
+        
+        px_length_cm = convert.get_px_side(image_shape)
+
+        fairway_width = convert.convert_px_to_m(px_length_cm, fairway_width)
+
+        print(f"Fairway width: {int(fairway_width)} m")
+
+        return landing_zone, fairway_width
+
+    except:
+        if len(intersection) == 0:
+            print("No intersections with fairway found")
+            return None, None
+
 
 def main():
-    image = cv2.imread('for_jacobo.png')
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    plt.imshow(image)
+    image = cv2.imread('C:\\Users\\jacob\\Project\\for_jacobo.png')
+    #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    #print("img shape: ", image.shape) # (256,416,3)
 
-
-    # (256,416,3)
     image2=cv2.resize(image,(800,450))
-    plt.imshow(image2)
+
+    # Get stroke lenghts in meters
+    total_lenghts, carry_lenghts = get_stroke_lengths(image2.shape)
+    print("stroke_lenghts: ", total_lenghts)
+
+    # Get Class coordinates
+    _, _, fairway, _, _ = get_class_coords(image2)
+    fairway_coords = cv2.findNonZero(fairway)
+
+    #Click the tee
+    center_point=[]
+    center_point=get_click_coords(image2,center_point)
+    print("centerpoint: ", center_point)
+    #centerpoint = (798,277), (x,y)
+
+    landing_t_point_list = []
+    landing_c_point_list = []
+    j=0
+    for i in range(len(total_lenghts)):
+        landing_point_t, _ = calc_fairway_width(fairway_coords, center_point[j%2], total_lenghts[i], image2.shape)
+        landing_point_c, _ = calc_fairway_width(fairway_coords, center_point[j%2], carry_lenghts[i], image2.shape)
+        landing_t_point_list.append(landing_point_t)
+        landing_c_point_list.append(landing_point_c)
+        j+=1
+        print("The total landing point is: ", landing_point_t)
+        print("The carry landing point is: ", landing_point_c)
+
+    #px_length_cm = convert.get_px_side(image2.shape)  
+
+    image2=draw_elipse.draw_elipse_scratch_m(image2, landing_t_point_list[0],center_point, total_lenghts[0] ,1000)
+    image2=draw_elipse.draw_elipse_scratch_f(image2, landing_t_point_list[1],center_point, total_lenghts[1] ,1000)
+    image2=draw_elipse.draw_elipse_bogey_m(image2, landing_t_point_list[2],center_point, total_lenghts[2] ,1000)
+    image2=draw_elipse.draw_elipse_bogey_f(image2, landing_t_point_list[3],center_point, total_lenghts[3] ,1000)
 
 
-    #transform meters to pixels     
-    stroke_dist_s_m= scracth_m(1000)
-    print(stroke_dist_s_m)
-    
-    #c1= plt.Circle((1400,555),scratch_s_px,color='w',fill=False )
+    figsize=(15,8)
+    fig,ax=plt.subplots(figsize=figsize)
+    #plt.plot(landing_point[0][0], landing_point[0][1], marker='v', color="white")
 
-    fairway,green, tees, bunkers, waters = get_class_cords(image2)
-    print("fairway: ", fairway)
-
-    #fairway2 = [(x,y) for y , value_y in enumerate(image2) for x, value in enumerate(value_y) if  value[0]==0 and value[1]==140 and value[2]==0]
-    # intersection_fairway=[ point for point in fairway if  int(math.sqrt((700- point[0])**2+(277-point[1])**2)) == int(distance)]
-    # print(len(intersection_fairway))
-    centerpoint = (798,277)
-    intersection_fairway = calc_intersection(fairway, centerpoint, stroke_dist_s_m)
-
-    edge_points=[]
-    edge_points.append(intersection_fairway[0])
-    edge_points.append(intersection_fairway[-1])
-    landing_point= intersection_fairway[int(len(intersection_fairway)/2)]
-    print("The edge points are: ",edge_points)
-    print("The landing point is: ",landing_point)
-
-    
-
+    cv2.imshow("image", image2)
+    cv2.waitKey(0)
+    cv2.destroyWindow()
 if __name__ == "__main__":
     main()
             

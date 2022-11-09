@@ -10,6 +10,10 @@ def click_event(event, x, y, flags, params):
         cv2.circle(params[0], (x, y), 5, (0, 0, 255), -1)
         params[1].append([x, y])
 
+    elif event == cv2.EVENT_MBUTTONDOWN:
+        cv2.circle(params[0], (x, y), 5, (0, 255, 255), -1)
+        params[1].append([x, y])
+
 # click on picture to get point coords, until ESC
 def get_click_coords(image, coords):
     cv2.namedWindow('image')
@@ -23,4 +27,4 @@ def get_click_coords(image, coords):
             break
 
     #convert coords list --> np.array, later easier to make calculations
-    return np.asarray(coords)
+    return coords
