@@ -12,13 +12,14 @@ def get_px_side(image_shape):
 def convert_px_to_m(px_size, px_num, scale=1000):
     return px_size * px_num * scale / 100
 
+# Converting px numbers to m2 
 def convert_to_m2(px_size, px_num, scale=1000):
     return px_size**2 * px_num * scale**2 / (100**2)
 
+# Converting meters to px number
 def convert_m_to_px(px_size, distance, scale=1000):
     return distance * 100 / scale / px_size
 
-
-# Calculates the distanconvert_to_m2ce between 
-def calculate_distance_between_two_points(a, b, image_shape):
-    return convert_px_to_m(np.linalg.norm(a - b), image_shape)
+# Converts yards to meters.
+def convert_yards_to_m(yards):
+    return yards * 0.9144
