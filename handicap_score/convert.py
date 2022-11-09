@@ -19,3 +19,7 @@ def convert_to_m2(px_size, px_num, scale=1000):
 # Converting meters to px number
 def convert_m_to_px(px_size, distance, scale=1000):
     return distance * 100 / scale / px_size
+
+# Converts yards to meters.
+def convert_yards_to_m(yards):
+    return yards * 0.9144
