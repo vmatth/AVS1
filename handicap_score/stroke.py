@@ -7,6 +7,7 @@ from get_classes import get_class_coords
 import convert
 from click import get_click_coords
 import draw_elipse
+import distance
 
 
 def get_stroke_lengths(image_shape):
@@ -64,9 +65,12 @@ def calc_fairway_width(class_, centerpoint, stroke_dist, image_shape):
             print("No intersections with fairway found")
             return None, None
 
+def extract_list(lst):
+    return [item[0] for item in lst]
 
 def main():
-    image = cv2.imread('C:\\Users\\jacob\\Project\\for_jacobo.png')
+    #image = cv2.imread('C:\\Users\\jacob\\Project\\for_jacobo.png')
+    image = cv2.imread('C:\\Users\\jespe\\Desktop\\AVS1\\for_jacobo.png')
     #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     #print("img shape: ", image.shape) # (256,416,3)
 
@@ -95,15 +99,32 @@ def main():
         landing_t_point_list.append(landing_point_t)
         landing_c_point_list.append(landing_point_c)
         j+=1
-        print("The total landing point is: ", landing_point_t)
-        print("The carry landing point is: ", landing_point_c)
+        # print("The total landing point is: ", landing_point_t)
+        # print("The carry landing point is: ", landing_point_c)
 
     #px_length_cm = convert.get_px_side(image2.shape)  
-
+    print("Landing ploints before e:",landing_t_point_list)
     image2=draw_elipse.draw_elipse_scratch_m(image2, landing_t_point_list[0],center_point, total_lenghts[0] ,1000)
     image2=draw_elipse.draw_elipse_scratch_f(image2, landing_t_point_list[1],center_point, total_lenghts[1] ,1000)
     image2=draw_elipse.draw_elipse_bogey_m(image2, landing_t_point_list[2],center_point, total_lenghts[2] ,1000)
     image2=draw_elipse.draw_elipse_bogey_f(image2, landing_t_point_list[3],center_point, total_lenghts[3] ,1000)
+
+    for point in landing_t_point_list:
+        print("points: ", point)
+        bunker_dist, water_dist = distance.distance_to_objects(image2, point)
+        if bunker_dist is not False:
+            bunker_coords = extract_list(bunker_dist)
+            for i in bunker_coords:
+                print("i:", i)
+                cv2.line(image2, point[0], i, (255,255,255), 1)
+            print("Coordenates",bunker_coords)
+            print("bunker dist: ", bunker_dist)
+        #cv2.line(image2, point, )
+
+    #bunker_coords = extract_list(bunker_distances)
+    
+    # for i in bunker_coords:
+    #     cv2.line()
 
 
     figsize=(15,8)
