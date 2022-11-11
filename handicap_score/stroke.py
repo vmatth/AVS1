@@ -71,9 +71,11 @@ def extract_list(lst):
 def main():
     #image = cv2.imread('C:\\Users\\jacob\\Project\\for_jacobo.png')
     image = cv2.imread('C:\\Users\\jespe\\Desktop\\AVS1\\for_jacobo.png')
+    #image = cv2.imread('C:\\Users\\jespe\\Desktop\\AVS1\\mask.png')
+    #ori_image = cv2.imread('C:\\Users\\jespe\\Desktop\\AVS1\\original_img.jpg')
     #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     #print("img shape: ", image.shape) # (256,416,3)
-
+    #ori_image=cv2.resize(ori_image,(800,450))
     image2=cv2.resize(image,(800,450))
 
     # Get stroke lenghts in meters
