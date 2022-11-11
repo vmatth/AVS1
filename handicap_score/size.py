@@ -10,8 +10,24 @@ from sklearn.preprocessing import normalize
 import math
 import os
 
+# returns the midpoint between two points
 def midpoint(ptA, ptB):
-	return (int((ptA[0] + ptB[0]) * 0.5), int((ptA[1] + ptB[1]) * 0.5))
+	return [round((ptA[0] + ptB[0]) * 0.5), round((ptA[1] + ptB[1]) * 0.5)]
+
+# returns [[p1 p2], max_distance] of ONE contour
+def get_max_dist_cnt(cnt, image_shape):
+    d = []
+
+    for p1 in cnt:
+        for p2 in cnt:
+            d.append([p1[0].tolist(), p2[0].tolist(), distance_two_points(p1, p2, image_shape)])
+        
+        # Max distance for one point
+    max_d = max(d, key=itemgetter(2))
+    return max_d
+
+def get_min_dist_cnt(midpoint):
+    pass
 
 def get_green_size(image, image_px_size, scale=1000, color='unet'):
     _, _, _, green, _ = get_class_coords(image, color)
@@ -19,7 +35,7 @@ def get_green_size(image, image_px_size, scale=1000, color='unet'):
     #The test image only contains 1 green. Thus we can calculate the size like this
     green_pxs = np.sum(green == 255)
     green_m2 = convert.convert_to_m2(image_px_size, green_pxs, scale)
-  
+
     return green_m2
 
 def get_bunker_size(image, image_px_size, scale=1000, color='unet'):
@@ -37,8 +53,8 @@ def get_bunker_size(image, image_px_size, scale=1000, color='unet'):
 
     return bunker_m2
 
-# This function gets the length and width of a green.
-def new_green_size(image, color='unet'):
+# This function gets the length, the width and the middlepoint of a green.
+def get_green_features(image, color='unet'):
     _, _, _, green, _ = get_class_coords(image, color)
 
     if np.sum(green == 255) == 0:
@@ -46,28 +62,25 @@ def new_green_size(image, color='unet'):
         return None, None
     
     contours, _ = cv2.findContours(green, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    shortPoint1, shortPoint2  = 0, 0
     max_dist = 0
-
+    
     for cnt in contours:
-        dists = []
-
-        # Calculate the distance between the all of the points in the contour and the starting point
-        for p in cnt:
-            for o in cnt:
-                dists.append([p[0].tolist(), o[0].tolist(), distance_two_points(p, o, image.shape)])
-       
-        # Max distance for one point
-        max_dist = max(dists, key=itemgetter(2))
-
+        print('-'*5 + ' Calculating features ' +'-'*5)
+        
+        max_dist = get_max_dist_cnt(cnt, image.shape)
+        print(f'Max point and distance: {max_dist}')
+        
         ## Draw a diagonal blue line with thickness of 5 px
-        cv2.line(image, tuple(max_dist[0]), tuple(max_dist[1]),(255,0,255),2)
-
+        cv2.line(image, tuple(max_dist[0]), tuple(max_dist[1]),(0,255,255),2)
         cv2.circle(image, tuple(max_dist[0]), 2, (255,0,255), -1)
         cv2.circle(image, tuple(max_dist[1]), 2, (255,0,255), -1)
         
         #quick maths kata
         mp = midpoint(max_dist[0], max_dist[1])
+        print(f'Midpoint: {mp}')
+        
+        cv2.circle(image, tuple(mp), 2, (255,0,255), -1)
+
 
         #Vector for longest line
         #    B.x              A.x             B.y              A.y
@@ -81,7 +94,6 @@ def new_green_size(image, color='unet'):
         v = [-v[1], v[0]]
         i = 0
 
-        #Find the intersection between this perpendicular vector and the contour
         found1, found2 = False, False
         while(1):
             newPoint = [int(mp[0] + (v[0] * i)), int(mp[1] + (v[1] * i))] #Start at the middle point and go +1 pixel in the vector's direction
@@ -100,21 +112,20 @@ def new_green_size(image, color='unet'):
                 break     
             i += 0.01
         
-        ## Draw a diagonal blue line with thickness of 5 px
-        cv2.line(image, shortPoint1, shortPoint2,(255,0,255),2)
-        
-    min_dist = [shortPoint1, shortPoint2, distance_two_points(np.asarray(shortPoint1), np.asarray(shortPoint2), image.shape)]
-    cv2.circle(image, mp, 3, (0,255,255), -1)
-
     cv2.imshow("Image with green sizes", image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     
-    return max_dist, min_dist
+    return max_dist, midpoint
 
 
+path = './for_jacobo.png'
+img = cv2.imread(path)
+print('Image is read')
 
-PATH = "C:\\Users\\Vini\\Desktop\\AVS1\\data\\saved_test_images\\"
+#max_dist, min_dist = 
+get_green_features(img, color='unet')
+""" PATH = "C:\\Users\\Vini\\Desktop\\AVS1\\data\\saved_test_images\\"
 def load_images_from_folder(path):
     images = []
     for filename in os.listdir(path):
@@ -127,4 +138,4 @@ def load_images_from_folder(path):
 for image in load_images_from_folder(PATH):
     max_dist, min_dist = new_green_size(image, color='unet')
 
-    print(max_dist, min_dist)
+    print(max_dist, min_dist) """
