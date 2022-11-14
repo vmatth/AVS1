@@ -1,27 +1,68 @@
-#This python file calculates the size of a given class in an image.
-#This is done by calculating the amount of pixels in the blob
+#This file contains functions to calculate the size of a green and the size of bunkers in an image
 import cv2
 import numpy as np
 from get_classes import get_class_coords
 import convert
 from distance import distance_two_points
 from operator import itemgetter
-from sklearn.preprocessing import normalize
 import math
 import os
 
 def midpoint(ptA, ptB):
 	return (int((ptA[0] + ptB[0]) * 0.5), int((ptA[1] + ptB[1]) * 0.5))
 
-def get_green_size(image, image_px_size, scale=1000, color='unet'):
-    _, _, _, green, _ = get_class_coords(image, color)
+# returns [[p1 p2], max_distance] of ONE contour (to find the length of a green)
+def get_max_dist_cnt(cnt, image_shape):
+    d = []
 
-    #The test image only contains 1 green. Thus we can calculate the size like this
-    green_pxs = np.sum(green == 255)
-    green_m2 = convert.convert_to_m2(image_px_size, green_pxs, scale)
-  
-    return green_m2
+    for p1 in cnt:
+        for p2 in cnt:
+            d.append([p1[0].tolist(), p2[0].tolist(), distance_two_points(p1, p2, image_shape)])
+        
+        # Max distance for one point
+    max_d = max(d, key=itemgetter(2))
+    return max_d
 
+# returns [p1, p2, dist] that defines the minimum width of a green.
+def get_min_dist_cnt(cnt, mp, v, image):
+    #Find the intersection between this perpendicular vector and the contour
+    shortPoint1, shortPoint2  = 0, 0
+    i = 0
+    height, width, channels = image.shape
+    
+    found1, found2 = False, False
+    while(1):
+        newPoint = [int(mp[0] + (v[0] * i)), int(mp[1] + (v[1] * i))] #Start at the middle point and go +1 pixel in the vector's direction
+        newPoint2 =  [int(mp[0] - (v[0] * i)), int(mp[1] - (v[1] * i))] #Start at the middle point and go -1 pixel in the vector's direction
+
+        #Check if any of the newPoints have reached out of bounds and stop the while loop so we don't go to infinity 
+        # (This isn't really necesarry since I fixed the cause. but I'm keeping it just in case)
+        if newPoint[0] > width or newPoint[0] < 0: # If the x point is outside the image width
+            if newPoint2[1] > height or newPoint2[1] < 0: #If the y point is outside the image height
+                print("Could not find a green width for this image")
+                return None, None, None
+
+        for p in cnt:
+            # Check if the distance between the estimated point and the contour point is equal or under 1 pixel. 
+            # This has been done since the contour may not store the point that the perpendicular vector intersects.
+            # I.e in cases where the contour point is not stored at a diagonal pixel.
+            # However, this approach means that on a good green, we lose 2 pixels of information.
+            if np.linalg.norm(p[0] - newPoint) <= 1:
+                cv2.circle(image, tuple(newPoint), 1, (255,0,255), -1)
+                shortPoint1 = newPoint
+                found1 = True
+            if np.linalg.norm(p[0] - newPoint2) <= 1:
+                cv2.circle(image, tuple(newPoint2), 1, (255,0,255), -1)
+                shortPoint2 = newPoint2
+                found2 = True                   
+        if found1 and found2: 
+            break     
+        i += 0.2
+
+    min_dist = [shortPoint1, shortPoint2, distance_two_points(np.asarray(shortPoint1), np.asarray(shortPoint2), image.shape)]
+    return min_dist
+
+#Returns a list of all the bunker sizes in an image
 def get_bunker_size(image, image_px_size, scale=1000, color='unet'):
     _, _, _, _, bunker = get_class_coords(image)
 
@@ -38,35 +79,25 @@ def get_bunker_size(image, image_px_size, scale=1000, color='unet'):
     return bunker_m2
 
 # This function gets the length and width of a green.
-def new_green_size(image, color='unet', scale=1000):
+# returns max_dist, min_dist, mp
+# where max_dist and min_dist = [p1_x, p1_y], [p2_x, p2_y], dist] (the points are the two points on the contour that creates the line, and dist is the distance of the line)
+# mp is the middlepoint of the green
+def get_green_size(image, color='unet', scale=1000):
     _, _, _, green, _ = get_class_coords(image, color)
 
     if np.sum(green == 255) == 0:
         print("There is no green on this image")
-        return None, None
+        return None, None, None
     
     contours, _ = cv2.findContours(green, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    shortPoint1, shortPoint2  = 0, 0
-    max_dist = 0
-
-    height, width, channels = image.shape
 
     for cnt in contours:
-        dists = []
-
-        # Calculate the distance between the all of the points in the contour and the starting point
-        for p in cnt:
-            for o in cnt:
-                dists.append([p[0].tolist(), o[0].tolist(), distance_two_points(p, o, image.shape)])
-       
-        # Max distance for one point
-        max_dist = max(dists, key=itemgetter(2))
+        max_dist = get_max_dist_cnt(cnt, image.shape)
 
         ## Draw a diagonal blue line with thickness of 5 px
-        cv2.line(image, tuple(max_dist[0]), tuple(max_dist[1]),(255,0,255),1)
-
-        cv2.circle(image, tuple(max_dist[0]), 1, (255,0,255), -1)
-        cv2.circle(image, tuple(max_dist[1]), 1, (255,0,255), -1)
+        # cv2.line(image, tuple(max_dist[0]), tuple(max_dist[1]),(255,0,255),1)
+        # cv2.circle(image, tuple(max_dist[0]), 1, (255,0,255), -1)
+        # cv2.circle(image, tuple(max_dist[1]), 1, (255,0,255), -1)
         
         #quick maths kata
         mp = midpoint(max_dist[0], max_dist[1])
@@ -76,66 +107,27 @@ def new_green_size(image, color='unet', scale=1000):
         v = [max_dist[1][0] - max_dist[0][0], max_dist[1][1] - max_dist[0][1]]
         #Normalize the vector
         mag = math.sqrt(v[0]**2 + v[1]**2)
-        v[0] /= mag
-        v[1] /= mag
+        
+        if mag != 0:
+            v[0] /= mag
+            v[1] /= mag
         
         #Calculate the perpendicular vector
         v = [-v[1], v[0]]
-        i = 0
-
-        #print("Perpendicular Vector: ", v)
-
-        #Find the intersection between this perpendicular vector and the contour
-        found1, found2 = False, False
-        while(1):
-            newPoint = [int(mp[0] + (v[0] * i)), int(mp[1] + (v[1] * i))] #Start at the middle point and go +1 pixel in the vector's direction
-            newPoint2 =  [int(mp[0] - (v[0] * i)), int(mp[1] - (v[1] * i))] #Start at the middle point and go -1 pixel in the vector's direction
-
-            #Check if any of the newPoints have reached out of bounds and stop the while loop so we don't go to infinity 
-            # (This isn't really necesarry since I fixed the cause. but I'm keeping it just in case)
-            if newPoint[0] > width or newPoint[0] < 0: # If the x point is outside the image width
-                if newPoint2[1] > height or newPoint2[1] < 0: #If the y point is outside the image height
-                    print("Could not find a green width for this image")
-                    return None, None
-
-            for p in cnt:
-                # Check if the distance between the estimated point and the contour point is equal or under 1 pixel. 
-                # This has been done since the contour may not store the point that the perpendicular vector intersects.
-                # I.e in cases where the contour point is not stored at a diagonal pixel.
-                # However, this approach means that on a good green, we lose 2 pixels of information.
-                if np.linalg.norm(p[0] - newPoint) <= 1:
-                    cv2.circle(image, tuple(newPoint), 1, (255,0,255), -1)
-                    shortPoint1 = newPoint
-                    found1 = True
-                if np.linalg.norm(p[0] - newPoint2) <= 1:
-                    cv2.circle(image, tuple(newPoint2), 1, (255,0,255), -1)
-                    shortPoint2 = newPoint2
-                    found2 = True                   
-                # if p[0][0] == newPoint[0] and p[0][1] == newPoint[1]: #Check if the newpoint is equal to any of the contours points
-                #     cv2.circle(image, tuple(newPoint), 2, (255,0,255), -1)
-                #     shortPoint1 = newPoint
-                #     found1 = True
-                #     print("FOUND1")
-                # if p[0][0] == newPoint2[0] and p[0][1] == newPoint2[1]: #Check if the newpoint2 is equal to any of the contours points
-                #     cv2.circle(image, tuple(newPoint2), 2, (255,0,255), -1)
-                #     shortPoint2 = newPoint2
-                #     found2 = True
-                #     print("FOUND2")
-            if found1 and found2: 
-                break     
-            i += 0.2
-        
-        ## Draw a diagonal blue line with thickness of 5 px
-        cv2.line(image, shortPoint1, shortPoint2,(255,0,255),1)
-        
-    min_dist = [shortPoint1, shortPoint2, distance_two_points(np.asarray(shortPoint1), np.asarray(shortPoint2), image.shape)]
-    cv2.circle(image, mp, 1, (0,255,255), -1)
-
-    cv2.imshow("Image with green sizes", image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
     
-    return max_dist, min_dist
+        #Find the intersection between this perpendicular vector and the contour
+        min_dist = get_min_dist_cnt(cnt, mp, v, image)
+
+        ## Draw a diagonal line with thickness of 5 px
+    #     cv2.line(image, min_dist[0], min_dist[1],(255,0,255),1)
+
+    # cv2.circle(image, mp, 1, (0,255,255), -1)
+
+    # cv2.imshow("Image with green sizes", image)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+    return max_dist, min_dist, mp
 
 
 
@@ -153,11 +145,8 @@ def load_images_from_folder(path):
 counter = 1
 for image in load_images_from_folder(PATH):
     print("Checking green for image [", counter, "]")
-    max_dist, min_dist = new_green_size(image, color='unet')
+    max_dist, min_dist, mp = get_green_size(image, color='unet')
+    print(max_dist, min_dist, mp)
     counter += 1
-    print(max_dist, min_dist)
 
-# img = cv2.imread("C:\\Users\\Vini\\Desktop\\AVS1\\data\\saved_test_images\\23_prediction.png")
-# max_dist, min_dist = new_green_size(img, color='unet')
-# print(max_dist, min_dist)
 
