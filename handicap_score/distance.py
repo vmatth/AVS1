@@ -5,9 +5,9 @@ import cv2
 from operator import itemgetter
 
 # Calculates the distance between two points
-def distance_two_points(a, b, image_shape):
+def distance_two_points(a, b, image_shape, scale=1000):
     px_side_size = convert.get_px_side(image_shape)
-    return convert.convert_px_to_m(px_side_size, np.linalg.norm(a - b))
+    return convert.convert_px_to_m(px_side_size, np.linalg.norm(a - b), scale)
 
 #Returns the distance to nearby objects (that are closer than the max_distance [m]) along with the pixel coordinates for each object.
 #The output is a list for each class. E.g bunker_dists contains the distances and pixel coordinates for each bunker in the image.
