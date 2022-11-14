@@ -79,8 +79,8 @@ def get_bunker_size(image, image_px_size, scale=1000, color='unet'):
     return bunker_m2
 
 # This function gets the length and width of a green.
-# returns max_dist, min_dist, mp
-# where max_dist and min_dist = [p1_x, p1_y], [p2_x, p2_y], dist] (the points are the two points on the contour that creates the line, and dist is the distance of the line)
+# returns length, width, mp
+# where length and width = [p1_x, p1_y], [p2_x, p2_y], dist] (the points are the two points on the contour that creates the line, and dist is the distance of the line)
 # mp is the middlepoint of the green
 def get_green_size(image, color='unet', scale=1000):
     _, _, _, green, _ = get_class_coords(image, color)
@@ -92,7 +92,7 @@ def get_green_size(image, color='unet', scale=1000):
     contours, _ = cv2.findContours(green, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
     for cnt in contours:
-        max_dist = get_max_dist_cnt(cnt, image.shape, scale)
+        length = get_max_dist_cnt(cnt, image.shape, scale)
 
         ## Draw a diagonal blue line with thickness of 5 px
         # cv2.line(image, tuple(max_dist[0]), tuple(max_dist[1]),(255,0,255),1)
@@ -100,11 +100,11 @@ def get_green_size(image, color='unet', scale=1000):
         # cv2.circle(image, tuple(max_dist[1]), 1, (255,0,255), -1)
         
         #quick maths kata
-        mp = midpoint(max_dist[0], max_dist[1])
+        mp = midpoint(length[0], length[1])
 
         #Vector for longest line
         #    B.x              A.x             B.y              A.y
-        v = [max_dist[1][0] - max_dist[0][0], max_dist[1][1] - max_dist[0][1]]
+        v = [length[1][0] - length[0][0], length[1][1] - length[0][1]]
         #Normalize the vector
         mag = math.sqrt(v[0]**2 + v[1]**2)
         
@@ -116,7 +116,7 @@ def get_green_size(image, color='unet', scale=1000):
         v = [-v[1], v[0]]
     
         #Find the intersection between this perpendicular vector and the contour
-        min_dist = get_min_dist_cnt(cnt, mp, v, image, scale)
+        width = get_min_dist_cnt(cnt, mp, v, image, scale)
 
         ## Draw a diagonal line with thickness of 5 px
     #     cv2.line(image, min_dist[0], min_dist[1],(255,0,255),1)
@@ -127,26 +127,26 @@ def get_green_size(image, color='unet', scale=1000):
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
-    return max_dist, min_dist, mp
+    return length, width, mp
 
 
 
-PATH = "C:\\Users\\Vini\\Desktop\\AVS1\\data\\saved_test_images\\"
-def load_images_from_folder(path):
-    images = []
-    for filename in os.listdir(path):
-        #print("filename: ", filename)
-        img = cv2.imread(os.path.join(path,filename))
-        if img is not None:
-            images.append(img)
-        # return images
-    return images
+# PATH = "C:\\Users\\Vini\\Desktop\\AVS1\\data\\saved_test_images\\"
+# def load_images_from_folder(path):
+#     images = []
+#     for filename in os.listdir(path):
+#         #print("filename: ", filename)
+#         img = cv2.imread(os.path.join(path,filename))
+#         if img is not None:
+#             images.append(img)
+#         # return images
+#     return images
 
-counter = 1
-for image in load_images_from_folder(PATH):
-    print("Checking green for image [", counter, "]")
-    max_dist, min_dist, mp = get_green_size(image, color='unet', scale=2000)
-    print(max_dist, min_dist, mp)
-    counter += 1
+# counter = 1
+# for image in load_images_from_folder(PATH):
+#     print("Checking green for image [", counter, "]")
+#     max_dist, min_dist, mp = get_green_size(image, color='unet', scale=2000)
+#     print(max_dist, min_dist, mp)
+#     counter += 1
 
 

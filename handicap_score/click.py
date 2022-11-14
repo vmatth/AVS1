@@ -6,7 +6,7 @@ import numpy as np
 # params[1]: coordinates - empty list
 def click_event(event, x, y, flags, params):
     
-    if event == cv2.EVENT_LBUTTONDOWN:
+    if event == cv2.EVENT_LBUTTONDOWN: #female
         cv2.circle(params[0], (x, y), 5, (0, 0, 255), -1)
         params[1].append([x, y])
 
