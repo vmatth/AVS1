@@ -9,6 +9,7 @@ from click import get_click_coords
 import draw_elipse
 import distance
 from size import get_green_size
+import do_everything
 
 # Inputs the total length and carry length of a stroke in yards
 # Returns them in pixels
@@ -87,10 +88,10 @@ def get_fairway_width(intersections, image_shape, scale):
     # Use the edgepoints to calculate the distance between them (that is calculating the fairway width)
     fairway_width = np.linalg.norm(edge_points1 - edge_points2)
     px_length_cm = convert.get_px_side(image_shape)
-    print("fairway px: ", fairway_width)
+    #print("fairway px: ", fairway_width)
     fairway_width = convert.convert_px_to_m(px_length_cm, fairway_width, scale)
     
-    print(f"Fairway width: {fairway_width} m")
+    #print(f"Fairway width: {fairway_width} m")
     return fairway_width
 
 # returns the distance from landing point to hole (in metres)
@@ -138,7 +139,7 @@ def extract_list(lst):
 
 def main():
     #image = cv2.imread('C:\\Users\\jacob\\Project\\for_jacobo.png')
-    image = cv2.imread('C:\\Users\\jespe\\Desktop\\AVS1\\for_jacobo1.png')
+    image = cv2.imread('C:\\Users\\jespe\\Desktop\\AVS1\\for_jacobo.png')
     #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     #print("img shape: ", image.shape) # (256,416,3)
     #ori_image=cv2.resize(ori_image,(800,450))
@@ -147,109 +148,36 @@ def main():
 
     # Get stroke lenghts in meters
     total_s_m, carry_s_m = get_stroke_lengths(image2.shape, 250, 230, scale)
-    #print("stroke_lenghts: ", total_lenghts)
+    total_s_f, carry_s_f = get_stroke_lengths(image2.shape, 210, 190, scale)
+    total_b_m, carry_b_m = get_stroke_lengths(image2.shape, 200, 180, scale)
+    total_b_f, carry_b_f = get_stroke_lengths(image2.shape, 150, 130, scale)
 
     # Get Class coordinates
     _, _, fairway, _, _ = get_class_coords(image2)
     fairway_coords = cv2.findNonZero(fairway)
 
+    #Different players
+    player_type=["scratch_male","scratch_female","bogey_male","bogey_female"]
+
     #Click the tee
     center_point=[]
     center_point=get_click_coords(image2,center_point)
-    print("centerpoint: ", center_point)
-    #centerpoint = (798,277), (x,y)
+    #print("centerpoint: ", center_point)
     
     #Get green sizes
-    green_length, green_width, green_centerpoint = get_green_size(image, color='unet', scale=scale)
+    green_length, green_width, green_centerpoint = get_green_size(image2, color='unet', scale=scale)
+    #print("green centerpoint: ", green_centerpoint)
+    male_point = center_point[0]
+    female_point = center_point[1]
 
-    point = center_point[0]
-    counter = 1
-    previous_distance_to_green = 999
-    total_distance = 0
-    while(True):
-        print(f"stroke: {counter}")
-        intersections = get_intersections(fairway_coords, point, total_s_m)
-
-        if intersections:
-            for stupidPoint in intersections:
-                cv2.circle(image2, stupidPoint[0], 1, (255, 255, 255))
-
-        # Get the shortest intersections in cases where there are multiple intersections with the fairway
-        if intersections:
-            intersections = get_shortest_intersections(intersections, point, green_centerpoint)
-
-        if intersections:
-            for stupidPoint in intersections:
-                cv2.circle(image2, stupidPoint[0], 3, (0, 255, 255))
-
-        if intersections: # Make sure there are intersections with the fairway
-
-            landing_point = get_landing_point(intersections)
-            distance_to_green = get_distance_landing_point_to_hole(landing_point, green_centerpoint, image2.shape, scale)
-            print("Distance to green: ", distance_to_green)
-            fairway_width = get_fairway_width(intersections, image2.shape, scale)
-
-            total_distance += distance.distance_two_points(point, landing_point, image2.shape, scale)
-            print("Total distance [m]: ", total_distance)
-            
-            cv2.circle(image2, landing_point, 1, (255, 255, 0))
-
-            point = landing_point #Refresh the point to be the new landingpoint
-
-        else:
-            distance_to_green = get_distance_landing_point_to_hole(landing_point, green_centerpoint, image2.shape, scale)
-            total_distance = distance_to_green + total_distance
-            print(f"Total distance of the hole: {total_distance} [m]")
-            break
-
-
-        counter += 1
-
-        cv2.imshow("image", image2)
-        cv2.waitKey(0)
-
-    # landing_t_point_list = []
-    # landing_c_point_list = []
-    # j=0
-    # for i in range(len(total_lenghts)):
-    #     landing_point_t, _ = calc_fairway_width(fairway_coords, center_point[j%2], total_lenghts[i], image2.shape)
-    #     landing_point_c, _ = calc_fairway_width(fairway_coords, center_point[j%2], carry_lenghts[i], image2.shape)
-    #     landing_t_point_list.append(landing_point_t)
-    #     landing_c_point_list.append(landing_point_c)
-    #     j+=1
-    #     # print("The total landing point is: ", landing_point_t)
-    #     # print("The carry landing point is: ", landing_point_c)
-
-    # #px_length_cm = convert.get_px_side(image2.shape)  
-    # print("Landing ploints before e:",landing_t_point_list)
-    # image2=draw_elipse.draw_elipse_scratch_m(image2, landing_t_point_list[0],center_point, total_lenghts[0] ,1000)
-    # image2=draw_elipse.draw_elipse_scratch_f(image2, landing_t_point_list[1],center_point, total_lenghts[1] ,1000)
-    # image2=draw_elipse.draw_elipse_bogey_m(image2, landing_t_point_list[2],center_point, total_lenghts[2] ,1000)
-    # image2=draw_elipse.draw_elipse_bogey_f(image2, landing_t_point_list[3],center_point, total_lenghts[3] ,1000)
-
-    # for point in landing_t_point_list:
-    #     print("points: ", point)
-    #     bunker_dist, water_dist = distance.distance_to_objects(image2, point)
-        
-    #     if bunker_dist is not False:
-    #         bunker_coords = extract_list(bunker_dist)
-    #         for i in bunker_coords:
-    #             print("i:", i)
-    #             cv2.line(image2, point[0], i, (255,255,255), 1)
-    #         print("Coordenates",bunker_coords)
-    #         print("bunker dist: ", bunker_dist)
-    #     #cv2.line(image2, point, )
-
-
-    #Get green sizes
-    #green_length, green_width, green_centerpoint = get_green_size(image, color='unet', scale=1000)
-
-    print("hello im here")
-
-
-    figsize=(15,8)
-    fig,ax=plt.subplots(figsize=figsize)
-    #plt.plot(landing_point[0][0], landing_point[0][1], marker='v', color="white")
+    image2 = do_everything.run_all_calcs(image2,fairway_coords, male_point, green_centerpoint, scale, total_s_m, player_type[0])
+    cv2.circle(image2, green_centerpoint, 1, (255, 255, 255))
+    # image3 = do_everything.run_all_calcs(image2,fairway_coords, female_point, green_centerpoint, scale, total_s_f, player_type[1])
+    # image4 = do_everything.run_all_calcs(image3,fairway_coords, male_point, green_centerpoint, scale, total_b_m, player_type[2])
+    # image5 = do_everything.run_all_calcs(image4,fairway_coords, female_point, green_centerpoint, scale, total_b_f, player_type[3])
+    
+    print(f"Green length: {green_length[-1]} [m]")
+    print(f"Green width: {green_width[-1]} [m]")
 
     cv2.imshow("image", image2)
     cv2.waitKey(0)

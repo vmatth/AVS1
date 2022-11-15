@@ -18,7 +18,7 @@ def get_class_coords(image, colors='unet'):
             'green': np.array([0, 255, 0]), #light green
             'tee': np.array([0, 0, 255]), #red
             'bunker': np.array([122, 230, 217]), #yellow
-            'water': np.array([247, 15, 247]) #blue
+            'water': np.array([247, 15, 7]) #blue
         }
     
     #mask for each class

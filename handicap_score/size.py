@@ -8,6 +8,27 @@ from operator import itemgetter
 import math
 import os
 
+def get_distance_to_front_and_back_green(image, landing_point, green_centerpoint, scale, color='unet'):    
+    px_length_cm = convert.get_px_side(image.shape)
+    v = [landing_point[0]-green_centerpoint[0], landing_point[1]-green_centerpoint[1]]
+    #Normalize the vector
+    mag = math.sqrt(v[0]**2 + v[1]**2)
+    
+    if mag != 0:
+        v[0] /= mag
+        v[1] /= mag
+
+    _, _, _, green, _ = get_class_coords(image, color)
+    green_contours, _ = cv2.findContours(green, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    #get distance from landing_zone to center of green
+    
+    for cnt in green_contours:
+        min_dist = get_min_dist_cnt(cnt, green_centerpoint, v, image, scale)
+    min_dist.pop()
+    distance_front_green = convert.convert_px_to_m(px_length_cm, np.linalg.norm(landing_point-min_dist[0]), scale)
+    distance_back_green = convert.convert_px_to_m(px_length_cm, np.linalg.norm(landing_point-min_dist[1]), scale)
+    return distance_front_green,distance_back_green
+
 def midpoint(ptA, ptB):
 	return (int((ptA[0] + ptB[0]) * 0.5), int((ptA[1] + ptB[1]) * 0.5))
 
@@ -48,11 +69,11 @@ def get_min_dist_cnt(cnt, mp, v, image, scale):
             # I.e in cases where the contour point is not stored at a diagonal pixel.
             # However, this approach means that on a good green, we lose 2 pixels of information.
             if np.linalg.norm(p[0] - newPoint) <= 1:
-                cv2.circle(image, tuple(newPoint), 1, (255,0,255), -1)
+                #cv2.circle(image, tuple(newPoint), 1, (255,0,255), -1)
                 shortPoint1 = newPoint
                 found1 = True
             if np.linalg.norm(p[0] - newPoint2) <= 1:
-                cv2.circle(image, tuple(newPoint2), 1, (255,0,255), -1)
+                #cv2.circle(image, tuple(newPoint2), 1, (255,0,255), -1)
                 shortPoint2 = newPoint2
                 found2 = True                   
         if found1 and found2: 

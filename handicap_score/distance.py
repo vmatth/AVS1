@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 from operator import itemgetter
 
+
 # Calculates the distance between two points
 def distance_two_points(a, b, image_shape, scale=1000):
     px_side_size = convert.get_px_side(image_shape)
@@ -16,11 +17,14 @@ def distance_two_points(a, b, image_shape, scale=1000):
 def distance_to_objects(image, point, max_distance=50, color='unet'):
     if point is not None:
         _, water, _, _, bunker = get_class_coords(image, color)
-
+        # cv2.imshow("water", water)
+        # cv2.imshow("bunker", bunker)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows
         #Find contours to get all instances of each class along with the contours points.
         water_contours, _ = cv2.findContours(water, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         bunker_contours, _ = cv2.findContours(bunker, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-        
+
         water_dists = []
         bunker_dists = []
         
