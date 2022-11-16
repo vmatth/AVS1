@@ -112,31 +112,24 @@ def draw_elipse(image, landing_point,center_point,player_type,stroke_dist_px,sca
             width_m=0
             depth_m=0
 
-        print("width elipse:",width_m)
-        print("depth elipse:",depth_m)
+        #print("width elipse:",width_m)
+        #print("depth elipse:",depth_m)
         #Calculation of width
         radius_w_px = convert.convert_m_to_px(px_length_cm, width_m, scale)/2
         #Calculation of width
         radius_d_px = convert.convert_m_to_px(px_length_cm, depth_m, scale)/2
         #Ellipse
         axes=(int(radius_d_px),int(radius_w_px))
-        print("Point a: ", point_a)
+        #print("Point a: ", point_a)
         c=stroke_dist_px
         a= landing_point[0]- point_a[0]
         b= center_point[1]-point_a[1]
-        print("a before if: ",a)
-        print("b before if:",b)
-        if a==0 or b==0:
-            a=center_point[1]- point_a[1]
-            b=landing_point[0]-point_a[0]
-        print("a after if: ",a)
-        print("b after if:",b)
-
-
+        #print("a : ",a)
+        #print("b :",b)
 
         angle_movement_radians= np.arctan(b/a)
-        angle_movement_degrees= angle_movement_radians*57.296
-        print("Angle º:", angle_movement_degrees)
+        angle_movement_degrees= 360-(angle_movement_radians*57.296)
+        #print("Angle º:", angle_movement_degrees)
         ellipse=cv2.ellipse(image, landing_point,axes,angle_movement_degrees,0,360,color,1)
         return ellipse
     else :

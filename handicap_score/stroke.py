@@ -22,7 +22,6 @@ def get_stroke_lengths(image_shape, total_length, carry_length, scale):
     total_length_m = convert.convert_yards_to_m(total_length) #Convert from yard to meter
     total_length_px = int(convert.convert_m_to_px(px_length_cm, total_length_m, scale)) #Convert from meter to px
 
-
     carry_length_m = convert.convert_yards_to_m(carry_length) 
     carry_length_px = int(convert.convert_m_to_px(px_length_cm, carry_length_m, scale))
 
@@ -54,6 +53,8 @@ def get_stroke_lengths_old(image_shape):
 def get_intersections(class_, starting_coordinates_, stroke_dist):
     intersection = []
     for point in class_:
+        #print("point: ", point)
+        #print("dist: ", int(np.linalg.norm(starting_coordinates_-point[0])))
         # Check if distance from the tee to the fairway is the same as the stroke length
         if int(np.linalg.norm(starting_coordinates_-point[0])) == int(stroke_dist):
             intersection.append(point)
@@ -77,7 +78,10 @@ def get_shortest_intersections(intersections, start_point, end_point):
     
 # Returns the landing point which lies at the middle of the intersection
 def get_landing_point(intersections):
-    return intersections[int(len(intersections)/2)][0]
+    if intersections == None:
+        return np.array([0,0])
+    else:
+        return intersections[int(len(intersections)/2)][0]
     
 # Calculates the fairway width at a given intersection
 def get_fairway_width(intersections, image_shape, scale):
@@ -137,53 +141,53 @@ def calc_fairway_width_old(class_, centerpoint, stroke_dist, image_shape):
 def extract_list(lst):
     return [item[0] for item in lst]
 
-def main():
-    #image = cv2.imread('C:\\Users\\jacob\\Project\\for_jacobo.png')
-    image = cv2.imread('C:\\Users\\jespe\\Desktop\\AVS1\\for_jacobo.png')
-    #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    #print("img shape: ", image.shape) # (256,416,3)
-    #ori_image=cv2.resize(ori_image,(800,450))
-    image2=cv2.resize(image,(800,450))
-    scale = 1250
+#def main():
+    # #image = cv2.imread('C:\\Users\\jacob\\Project\\for_jacobo.png')
+    # image = cv2.imread('C:\\Users\\jespe\\Desktop\\AVS1\\for_jacobo1.png')
+    # #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # #print("img shape: ", image.shape) # (256,416,3)
+    # #ori_image=cv2.resize(ori_image,(800,450))
+    # image2=cv2.resize(image,(800,450))
+    # scale = 1250
 
-    # Get stroke lenghts in meters
-    total_s_m, carry_s_m = get_stroke_lengths(image2.shape, 250, 230, scale)
-    total_s_f, carry_s_f = get_stroke_lengths(image2.shape, 210, 190, scale)
-    total_b_m, carry_b_m = get_stroke_lengths(image2.shape, 200, 180, scale)
-    total_b_f, carry_b_f = get_stroke_lengths(image2.shape, 150, 130, scale)
+    # # Get stroke lenghts in meters
+    # total_s_m, carry_s_m = get_stroke_lengths(image2.shape, 250, 230, scale)
+    # total_s_f, carry_s_f = get_stroke_lengths(image2.shape, 210, 190, scale)
+    # total_b_m, carry_b_m = get_stroke_lengths(image2.shape, 200, 180, scale)
+    # total_b_f, carry_b_f = get_stroke_lengths(image2.shape, 150, 130, scale)
 
-    # Get Class coordinates
-    _, _, fairway, _, _ = get_class_coords(image2)
-    fairway_coords = cv2.findNonZero(fairway)
+    # # Get Class coordinates
+    # _, _, fairway, _, _ = get_class_coords(image2)
+    # fairway_coords = cv2.findNonZero(fairway)
 
-    #Different players
-    player_type=["scratch_male","scratch_female","bogey_male","bogey_female"]
+    # #Different players
+    # player_type=["scratch_male","scratch_female","bogey_male","bogey_female"]
 
-    #Click the tee
-    center_point=[]
-    center_point=get_click_coords(image2,center_point)
-    #print("centerpoint: ", center_point)
+    # #Click the tee
+    # center_point=[]
+    # center_point=get_click_coords(image2,center_point)
+    # #print("centerpoint: ", center_point)
     
-    #Get green sizes
-    green_length, green_width, green_centerpoint = get_green_size(image2, color='unet', scale=scale)
-    #print("green centerpoint: ", green_centerpoint)
-    male_point = center_point[0]
-    female_point = center_point[1]
+    # #Get green sizes
+    # green_length, green_width, green_centerpoint = get_green_size(image2, color='unet', scale=scale)
+    # #print("green centerpoint: ", green_centerpoint)
+    # male_point = center_point[0]
+    # female_point = center_point[1]
 
-    image2 = do_everything.run_all_calcs(image2,fairway_coords, male_point, green_centerpoint, scale, total_s_m, player_type[0])
-    cv2.circle(image2, green_centerpoint, 1, (255, 255, 255))
+    # image2 = do_everything.run_all_calcs(image2,fairway_coords, male_point, green_centerpoint, scale, total_s_m, player_type[0])
+    # #cv2.circle(image2, green_centerpoint, 1, (255, 255, 255))
     # image3 = do_everything.run_all_calcs(image2,fairway_coords, female_point, green_centerpoint, scale, total_s_f, player_type[1])
     # image4 = do_everything.run_all_calcs(image3,fairway_coords, male_point, green_centerpoint, scale, total_b_m, player_type[2])
     # image5 = do_everything.run_all_calcs(image4,fairway_coords, female_point, green_centerpoint, scale, total_b_f, player_type[3])
     
-    print(f"Green length: {green_length[-1]} [m]")
-    print(f"Green width: {green_width[-1]} [m]")
+    # print(f"Green length: {green_length[-1]} [m]")
+    # print(f"Green width: {green_width[-1]} [m]")
 
-    cv2.imshow("image", image2)
-    cv2.waitKey(0)
-    cv2.destroyWindow()
-if __name__ == "__main__":
-    main()
+    # cv2.imshow("image", image5)
+    # cv2.waitKey(0)
+    # cv2.destroyWindow()
+# if __name__ == "__main__":
+#     main()
             
 
 

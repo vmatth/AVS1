@@ -6,7 +6,7 @@ def get_scale(img_path):
 
     for val in img_name:
         
-        if val <= '2000' and val >= '1250':
+        if val <= '2000' and val >= '1000':
             img_scale = val
             
     if img_scale == None:
