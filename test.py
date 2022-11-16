@@ -30,10 +30,10 @@ from train import(
     PIN_MEMORY
 )
 
-BEST_M_CHECKPOINT_DIR = "C:\\Users\\Vini\\Desktop\\Mini Project\\Pre-Trained (resnet 152)\\29_best_model.pth.tar"#"./saved_models/best_model.pth.tar"
-TEST_IMG_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\test_images_trees\\" # "/home/ubuntu/project/data/test_images/"
-TEST_MASK_DIR = "C:\\Users\\Vini\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\test_masks\\" #"../data/test_masks/"
-TEST_RES_DIR = "data/saved_test_images" #"../data/saved_test_images"
+BEST_M_CHECKPOINT_DIR = "saved_models/best_model.pth.tar"
+TEST_IMG_DIR = "../test_images_trees/"
+TEST_MASK_DIR = "../test_masks/"
+TEST_RES_DIR = "data/saved_test_images/"
 BATCH_SIZE = 1
 
 def load_best_checkpoint(model):
@@ -56,7 +56,7 @@ def main():
         ],
     )
 
-    testloader=get_test(
+    testloader, names =get_test(
         TEST_IMG_DIR,
         TEST_MASK_DIR,
         NUM_WORKERS,
@@ -85,8 +85,8 @@ def main():
     loss_fn = nn.CrossEntropyLoss()
     
     #Check accuracy of the model using the testing data
-    #check_test_accuracy(testloader, model, loss_fn, DEVICE, True)
-    save_predictions_as_imgs(testloader, model, BATCH_SIZE, TEST_RES_DIR, DEVICE, testing=True)
+    check_test_accuracy(testloader, model, loss_fn, DEVICE, show_individual_accuracy=False)
+    save_predictions_as_imgs(testloader, model, BATCH_SIZE, TEST_RES_DIR, DEVICE, testing=True, names=names)
 
 if __name__ == "__main__":
     main()

@@ -9,6 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 import torch.nn as nn
 import segmentation_models_pytorch as smp
 import tqdm
+import os
 
 # BATCH_SIZE = 1 #CAN BE CHANGED TO 32
 # BATCH_SIZE = get_loaders()
@@ -29,6 +30,8 @@ class save_best_model:
                 "model_state_dict": model.state_dict(),
                 "optimer_state_dict": optimizer.state_dict(),
                 "loss": loss_fn,
+                "best_model_epoch": self.best_valid_loss_epoch,
+                "best_model_val": self.best_valid_loss,
                 }, "saved_models/best_model.pth.tar")
 
 
@@ -47,12 +50,14 @@ def load_checkpoint(PATH, model, optimizer):
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         loaded_epoch = checkpoint['epoch']
+        best_model_epoch = checkpoint['best_model_epoch']
+        best_model_val = checkpoint['best_model_loss']
         print("     Successfully Loaded at Epoch: ", loaded_epoch)
         model.eval()
-        return model, optimizer, loaded_epoch
+        return model, optimizer, loaded_epoch, best_model_epoch, best_model_val
     except:
         print("     Loading Checkpoint Failed")
-        return model, optimizer, 0
+        return model, optimizer, 0, float("inf"), float("inf") 
 
 
 def get_loaders(  
@@ -115,7 +120,8 @@ def get_test(
         shuffle=False, 
         num_workers=num_workers,
         pin_memory=pin_memory)
-    return test_loader
+    names = os.listdir(test_dir)
+    return test_loader, names
 
 # Calculates the Intersection over Union of prediction (tags) compared to the ground truth (mask)
 def calc_IoU(tags, mask):
@@ -372,7 +378,7 @@ def check_test_accuracy(
     return 1
 
 def save_predictions_as_imgs(
-    loader, model, batch_size, folder="data/saved_images/", device="cuda",testing=False
+    loader, model, batch_size, folder="data/saved_images/", device="cuda",testing=False, counter=0, names=[]
 ):
     if not testing:
         print("Saving validation images")
@@ -386,7 +392,7 @@ def save_predictions_as_imgs(
         with torch.no_grad():
             preds = model(x)
         #Classes | 0: Background | 1: Fairway | 2: Green | 3: Tees | 4: Bunkers | 5: Water |
-        class_to_color = [torch.tensor([0.0, 0.0, 0.0], device='cuda'), torch.tensor([77.0/255, 156.0/255, 77.0/255],  device='cuda'), torch.tensor([142.0/255, 243.0/255, 122.0/255],  device='cuda'), torch.tensor([255.0/255, 36.0/255, 0.0],  device='cuda'), torch.tensor([246.0/255, 246.0/255, 158.0/255],  device='cuda'), torch.tensor([46.0/255, 200/255, 231.0/255],  device='cuda')]
+        class_to_color = [torch.tensor([0.0, 0.0, 0.0], device='cuda'), torch.tensor([0.0, 140.0/255, 0.0],  device='cuda'), torch.tensor([0.0, 1.0, 0.0],  device='cuda'), torch.tensor([1.0, 0.0, 0.0],  device='cuda'), torch.tensor([217.0/255, 230.0/255, 122.0/255],  device='cuda'), torch.tensor([7.0/255, 15.0/255, 247.0/255],  device='cuda')]
         output = torch.zeros(preds.shape[0], 3, preds.size(-2), preds.size(-1), dtype=torch.float,  device='cuda') #Output size is set to preds.shape[0] as the size automatically changes to fit the remaining batch_size.
         for class_idx, color in enumerate(class_to_color):
             mask = preds[:,class_idx,:,:] == torch.max(preds, dim=1)[0]
@@ -408,8 +414,15 @@ def save_predictions_as_imgs(
 
         #Save images to our saved_images folder
         torchvision.utils.save_image(output, f"{folder}/{idx+1}_prediction.png")
-        torchvision.utils.save_image(y_output, f"{folder}/{idx+1}_groundtruth.png")
-        torchvision.utils.save_image(x, f"{folder}/{idx+1}_figure.png")
+        if counter == 0: #Only save original and grountruth on the first tine (no reason to re-save it if they dont change)
+            torchvision.utils.save_image(y_output, f"{folder}/{idx+1}_groundtruth.png")
+            if testing:
+                name = names[idx].replace(".jpg", "")
+                torchvision.utils.save_image(x, f"{folder}/{idx+1}__{name}.png")
+            else:
+                torchvision.utils.save_image(x, f"{folder}/{idx+1}_figure_.png")
+
+            
     
     if not testing:
         model.train()
