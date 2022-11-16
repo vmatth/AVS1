@@ -392,7 +392,7 @@ def save_predictions_as_imgs(
         with torch.no_grad():
             preds = model(x)
         #Classes | 0: Background | 1: Fairway | 2: Green | 3: Tees | 4: Bunkers | 5: Water |
-        class_to_color = [torch.tensor([0.0, 0.0, 0.0], device='cuda'), torch.tensor([0.0, 140.0/255, 0.0],  device='cuda'), torch.tensor([0.0, 255.0/255, 0.0],  device='cuda'), torch.tensor([255.0/255, 0.0, 0.0],  device='cuda'), torch.tensor([217.0/255, 230.0/255, 122.0/255],  device='cuda'), torch.tensor([7.0/255, 15.0/255, 247.0/255],  device='cuda')]
+        class_to_color = [torch.tensor([0.0, 0.0, 0.0], device='cuda'), torch.tensor([77.0/255, 156.0/255, 77.0/255],  device='cuda'), torch.tensor([142.0/255, 243.0/255, 122.0/255],  device='cuda'), torch.tensor([255.0/255, 36.0/255, 0.0],  device='cuda'), torch.tensor([246.0/255, 246.0/255, 158.0/255],  device='cuda'), torch.tensor([46.0/255, 200/255, 231.0/255],  device='cuda')]
         output = torch.zeros(preds.shape[0], 3, preds.size(-2), preds.size(-1), dtype=torch.float,  device='cuda') #Output size is set to preds.shape[0] as the size automatically changes to fit the remaining batch_size.
         for class_idx, color in enumerate(class_to_color):
             mask = preds[:,class_idx,:,:] == torch.max(preds, dim=1)[0]
