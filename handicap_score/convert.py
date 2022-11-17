@@ -9,15 +9,15 @@ def get_px_side(image_shape):
     return new_one_px
 
 # Converts pixels to meters.
-def convert_px_to_m(px_size, px_num, scale=1000):
+def convert_px_to_m(px_size, px_num, scale):
     return px_size * px_num * scale / 100
 
 # Converting px numbers to m2 
-def convert_to_m2(px_size, px_num, scale=1000):
+def convert_to_m2(px_size, px_num, scale):
     return px_size**2 * px_num * scale**2 / (100**2)
 
 # Converting meters to px number
-def convert_m_to_px(px_size, distance, scale=1000):
+def convert_m_to_px(px_size, distance, scale):
     return distance * 100 / scale / px_size
 
 # Converts yards to meters.

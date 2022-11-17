@@ -17,7 +17,7 @@ def angle_between(v1, v2):
 def draw_elipse(image, landing_point,center_point,player_type,stroke_dist_px,scale):
     if landing_point is not None:
         px_length_cm = convert.get_px_side(image.shape)    
-        stroke_dist= int(convert.convert_px_to_m(px_length_cm,stroke_dist_px))
+        stroke_dist= int(convert.convert_px_to_m(px_length_cm,stroke_dist_px, scale))
         if player_type=="scratch_male":
             color = (0, 255, 255) #yellow
             point_a= (center_point[0],landing_point[1])
@@ -75,7 +75,7 @@ def draw_elipse(image, landing_point,center_point,player_type,stroke_dist_px,sca
         elif player_type=="bogey_male":
             color = (0, 255, 255) #yellow
             point_a= (center_point[0],landing_point[1])
-            if convert.convert_yards_to_m(170)<stroke_dist<=convert.convert_yards_to_m(190):
+            if convert.convert_yards_to_m(170)<stroke_dist<=convert.convert_yards_to_m(200):
                 width_m=convert.convert_yards_to_m(29)
                 depth_m=convert.convert_yards_to_m(34)
             elif convert.convert_yards_to_m(150)<stroke_dist<=convert.convert_yards_to_m(170):
@@ -141,7 +141,7 @@ def draw_elipse(image, landing_point,center_point,player_type,stroke_dist_px,sca
 def draw_elipse_scratch_m(image, landing_point,center_point,stroke_dist_px,scale):
     if landing_point is not None:
         px_length_cm = convert.get_px_side(image.shape)    
-        stroke_dist= int(convert.convert_px_to_m(px_length_cm,stroke_dist_px))
+        stroke_dist= int(convert.convert_px_to_m(px_length_cm,stroke_dist_px, scale))
         if convert.convert_yards_to_m(230)<stroke_dist<=convert.convert_yards_to_m(250):
             width_m=convert.convert_yards_to_m(41)
             depth_m=convert.convert_yards_to_m(21)

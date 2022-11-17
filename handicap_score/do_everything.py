@@ -13,7 +13,7 @@ import size
 
 
 
-def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint, scale, stroke_distance, player_type):
+def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint, scale, stroke_distance, player_type, pixel_size):
     center_point = point
     stroke_number = 1
     total_distance = 0
@@ -22,11 +22,11 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
 
         if player_type=="scratch_male" or player_type=="bogey_male":
             if stroke_number == 2:
-                stroke_distance = stroke_distance-convert.convert_yards_to_m(30)
+                stroke_distance = stroke_distance-convert.convert_m_to_px(pixel_size, 27.43200, scale)
 
         if player_type=="scratch_female" or player_type== "bogey_female":
             if stroke_number == 2:
-                stroke_distance = stroke_distance-convert.convert_yards_to_m(20)
+                stroke_distance = stroke_distance-convert.convert_m_to_px(pixel_size, 18.28800, scale)
 
         intersections = stroke.get_intersections(fairway_coords, point, stroke_distance)
         landing_point = stroke.get_landing_point(intersections)
@@ -54,7 +54,7 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
             
             cv2.circle(original, landing_point, 1, (255, 255, 0))
 
-            bunker_dist, water_dist = distance.distance_to_objects(prediction, landing_point)
+            bunker_dist, water_dist = distance.distance_to_objects(prediction, landing_point, scale)
             #print("bunker dist: ", bunker_dist)
             #print("water dist: ", water_dist)
             if bunker_dist is not False:
@@ -75,16 +75,16 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
             # print("bunker dist: ", bunker_dist)
 
             point = landing_point #Refresh the point to be the new landingpoint
+            
 
 
 
         else:
-            print("madafucking landing points:", landing_point)
-            if np.sum(landing_point) > 0:
-                distance_to_green = stroke.get_distance_landing_point_to_hole(landing_point, green_centerpoint, original.shape, scale)
-                total_distance = distance_to_green + total_distance
-                print(f"Total distance for {player_type}: {total_distance} [m]")
-                distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, landing_point, green_centerpoint, scale, color="unet")
+            if np.sum(landing_point) == 0:
+                distance_to_green = stroke.get_distance_landing_point_to_hole(point, green_centerpoint, original.shape, scale)
+                lenght_of_hole = total_distance + distance_to_green
+                print(f"Total distance for {player_type}: {lenght_of_hole} [m]")
+                distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, point, green_centerpoint, scale, color="unet")
                 print(f"distance to front green {distance_front_green} [m], distance to back green {distance_back_green} [m]")
 
             elif np.sum(landing_point) == 0 and stroke_number == 1:

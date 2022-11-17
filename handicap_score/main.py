@@ -5,7 +5,8 @@ import do_everything
 import get_classes
 import size
 import click
-
+import distance
+import convert
 
 
 
@@ -16,6 +17,7 @@ def main():
     image_path1='C:\\Users\\jespe\\Desktop\\AVS1\\11_prediction_1500_001.png'
     prediction = cv2.imread(image_path1)
     original = cv2.imread(image_path)
+    pixel_size = convert.get_px_side(original.shape)
 
     #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     #print("img shape: ", image.shape) # (256,416,3)
@@ -30,7 +32,6 @@ def main():
     total_s_f, carry_s_f = stroke.get_stroke_lengths(original.shape, 210, 190, scale)
     total_b_m, carry_b_m = stroke.get_stroke_lengths(original.shape, 200, 180, scale)
     total_b_f, carry_b_f = stroke.get_stroke_lengths(original.shape, 150, 130, scale)
-
 
     # Get Class coordinates
     _, _, fairway, _, _ = get_classes.get_class_coords(prediction)
@@ -49,14 +50,22 @@ def main():
     #print("green centerpoint: ", green_centerpoint)
     male_point = center_point[0]
     female_point = center_point[1]
+    
+    bunker_to_obstacles_male_tee, water_to_obstacles_male_tee  = distance.distance_to_objects(prediction, male_point, scale, max_distance=convert.convert_px_to_m(pixel_size, total_s_m, scale))
+    print(f"Distance to bunkers - male tee: {bunker_to_obstacles_male_tee} [m]")
+    print(f"Distance to water - male tee: {water_to_obstacles_male_tee} [m]")
+    bunker_to_obstacles_female_tee, water_to_obstacles_female_tee  = distance.distance_to_objects(prediction, female_point, scale, max_distance=convert.convert_px_to_m(pixel_size, total_s_f, scale))
+    print(f"Distance to bunkers - female tee: {bunker_to_obstacles_female_tee} [m]")
+    print(f"Distance to water - female tee: {water_to_obstacles_female_tee} [m]")
 
-    original = do_everything.run_all_calcs(original, prediction, fairway_coords, male_point, green_centerpoint, scale, total_s_m, player_type[0])
-    original1 = do_everything.run_all_calcs(original, prediction, fairway_coords, female_point, green_centerpoint, scale, total_s_f, player_type[1])
-    original2 = do_everything.run_all_calcs(original1, prediction, fairway_coords, male_point, green_centerpoint, scale, total_b_m, player_type[2])
-    original3 = do_everything.run_all_calcs(original2, prediction, fairway_coords, female_point, green_centerpoint, scale, total_b_f, player_type[3])
+    original = do_everything.run_all_calcs(original, prediction, fairway_coords, male_point, green_centerpoint, scale, total_s_m, player_type[0], pixel_size)
+    original1 = do_everything.run_all_calcs(original, prediction, fairway_coords, female_point, green_centerpoint, scale, total_s_f, player_type[1], pixel_size)
+    original2 = do_everything.run_all_calcs(original1, prediction, fairway_coords, male_point, green_centerpoint, scale, total_b_m, player_type[2], pixel_size)
+    original3 = do_everything.run_all_calcs(original2, prediction, fairway_coords, female_point, green_centerpoint, scale, total_b_f, player_type[3], pixel_size)
     
     print(f"Green length: {green_length[-1]} [m]")
     print(f"Green width: {green_width[-1]} [m]")
+
 
     cv2.imshow("image", original3)
     cv2.waitKey(0)

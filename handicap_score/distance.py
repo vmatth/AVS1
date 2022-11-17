@@ -6,7 +6,7 @@ from operator import itemgetter
 
 
 # Calculates the distance between two points
-def distance_two_points(a, b, image_shape, scale=1000):
+def distance_two_points(a, b, image_shape, scale):
     px_side_size = convert.get_px_side(image_shape)
     return convert.convert_px_to_m(px_side_size, np.linalg.norm(a - b), scale)
 
@@ -14,7 +14,7 @@ def distance_two_points(a, b, image_shape, scale=1000):
 #The output is a list for each class. E.g bunker_dists contains the distances and pixel coordinates for each bunker in the image.
 # bunker_dists[i][0] will be the pixel coordinate,
 # bunker_dists[i][1] will be the distance from the starting point to this coordinate
-def distance_to_objects(image, point, max_distance=50, color='unet'):
+def distance_to_objects(image, point, scale, max_distance=convert.convert_yards_to_m(50), color='unet'):
     if point is not None:
         _, water, _, _, bunker = get_class_coords(image, color)
         # cv2.imshow("water", water)
@@ -34,7 +34,7 @@ def distance_to_objects(image, point, max_distance=50, color='unet'):
             # Calculate the distance between the contours and the starting point
             for p in cnt:
                 # Append distance and the contour point to lists
-                dists.append([p[0].tolist(), distance_two_points(p, point, image.shape)])
+                dists.append([p[0].tolist(), distance_two_points(p, point, image.shape, scale)])
 
             # Black Magic - https://stackoverflow.com/questions/16036913/minimum-of-list-of-lists
             min_dist = min(dists, key=itemgetter(1))
@@ -48,7 +48,7 @@ def distance_to_objects(image, point, max_distance=50, color='unet'):
             # Calculate the distance between the contours and the starting point
             for p in cnt:
                 # Append distance and the contour point to lists
-                dists.append([p[0].tolist(), distance_two_points(p, point, image.shape)])
+                dists.append([p[0].tolist(), distance_two_points(p, point, image.shape, scale)])
 
             # Black Magic 
             min_dist = min(dists, key=itemgetter(1))
