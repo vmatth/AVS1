@@ -50,7 +50,7 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
             total_distance += distance.distance_two_points(point, landing_point, original.shape, scale)
             print(f"Total distance for {player_type}: {total_distance} [m]")
             
-            original=draw_elipse.draw_elipse(original, landing_point, point, player_type,stroke_distance ,scale)
+            original=draw_elipse.draw_elipse(original, landing_point, point, player_type, stroke_distance, scale)
             
             cv2.circle(original, landing_point, 1, (255, 255, 0))
 
@@ -62,7 +62,7 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
                 #print("Coordenates", bunker_coords)
                 for i in bunker_coords:
                     #print("i:", i)
-                    cv2.line(original, landing_point, i, (255,255,255), 1)
+                    cv2.line(original, landing_point, i, (255, 255, 255), 1)
             
             if water_dist is not False:
                 Water_coords = stroke.extract_list(water_dist)
@@ -80,8 +80,8 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
 
 
         else:
-            if np.sum(landing_point) == 0:
-                distance_to_green = stroke.get_distance_landing_point_to_hole(point, green_centerpoint, original.shape, scale)
+            if np.sum(landing_point) == 0 and stroke_number > 1:
+                distance_to_green = stroke.get_distance_landing_point_to_hole(np.array(point), green_centerpoint, original.shape, scale)
                 lenght_of_hole = total_distance + distance_to_green
                 print(f"Total distance for {player_type}: {lenght_of_hole} [m]")
                 distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, point, green_centerpoint, scale, color="unet")

@@ -51,17 +51,20 @@ def get_stroke_lengths_old(image_shape):
 
 # returns a list of points  in a class that the stroke intersects (e.g intersection between fairway class and the stroke distance)
 def get_intersections(class_, starting_coordinates_, stroke_dist):
-    intersection = []
-    for point in class_:
-        #print("point: ", point)
-        #print("dist: ", int(np.linalg.norm(starting_coordinates_-point[0])))
-        # Check if distance from the tee to the fairway is the same as the stroke length
-        if int(np.linalg.norm(starting_coordinates_-point[0])) == int(stroke_dist):
-            intersection.append(point)
-
-    if len(intersection) == 0:
-        print("Could not calculate a landing point")
+    if np.sum(np.array(class_)) == 0:
         return None
+    else:
+        intersection = []
+        for point in class_:
+            #print("point: ", point)
+            #print("dist: ", int(np.linalg.norm(starting_coordinates_-point[0])))
+            # Check if distance from the tee to the fairway is the same as the stroke length
+            if int(np.linalg.norm(starting_coordinates_-point[0])) == int(stroke_dist):
+                intersection.append(point)
+
+        if len(intersection) == 0:
+            print("Could not calculate a landing point")
+            return None
 
     return intersection
 

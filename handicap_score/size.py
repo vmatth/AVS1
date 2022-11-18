@@ -8,7 +8,7 @@ from operator import itemgetter
 import math
 import os
 
-def get_distance_to_front_and_back_green(image, landing_point, green_centerpoint, scale, color='unet'):    
+def get_distance_to_front_and_back_green(image, landing_point, green_centerpoint, scale, color='unet'):  
     px_length_cm = convert.get_px_side(image.shape)
     v = [landing_point[0]-green_centerpoint[0], landing_point[1]-green_centerpoint[1]]
     #Normalize the vector
