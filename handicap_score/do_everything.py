@@ -88,11 +88,12 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
                 print(f"distance to front green {distance_front_green} [m], distance to back green {distance_back_green} [m]")
 
             elif np.sum(landing_point) == 0 and stroke_number == 1:
+                
                 distance_to_green = stroke.get_distance_landing_point_to_hole(np.array(center_point), green_centerpoint, original.shape, scale)
                 print(f"Total distance for {player_type}: {distance_to_green} [m]")
                 distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, np.array(center_point), green_centerpoint, scale, color="unet")
                 print(f"distance to front green {distance_front_green} [m], distance to back green {distance_back_green} [m]")
-
+             
 
             break
 
