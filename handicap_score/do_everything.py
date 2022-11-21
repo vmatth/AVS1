@@ -18,7 +18,7 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
     stroke_number = 1
     total_distance = 0
     while(True):
-        print(f"stroke: {stroke_number}")
+        print(f"stroke: {stroke_number} for {player_type}")
 
         if player_type=="scratch_male" or player_type=="bogey_male":
             if stroke_number == 2:
@@ -27,21 +27,17 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
         if player_type=="scratch_female" or player_type== "bogey_female":
             if stroke_number == 2:
                 stroke_distance = stroke_distance-convert.convert_m_to_px(pixel_size, 18.28800, scale)
-
+                
         intersections = stroke.get_intersections(fairway_coords, point, stroke_distance)
-        landing_point = stroke.get_landing_point(intersections)
-        # landing_point = stroke.get_landing_point(intersections)
-        # fairway_width = stroke.get_fairway_width(intersections, image2.shape, scale)
-        # image2=draw_elipse.draw_elipse_scratch_m(image2, landing_point, point, stroke_distance ,1000)
 
+        
+        landing_point = (0,0)
         # Get the shortest intersections in cases where there are multiple intersections with the fairway
-        if intersections:
+        if intersections :
             intersections = stroke.get_shortest_intersections(intersections, point, green_centerpoint)
-
-
-        if intersections: # Make sure there are intersections with the fairway
-            #landing_point = stroke.get_landing_point(intersections)
-
+        if intersections : 
+            landing_point = stroke.get_landing_point(intersections)
+        
             print("landing point: ", landing_point)
             distance_to_green = stroke.get_distance_landing_point_to_hole(landing_point, green_centerpoint, original.shape, scale)
             print(f"Distance to green: {distance_to_green} [m]")
@@ -70,13 +66,9 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
                 for i in Water_coords:
                     #print("i:", i)
                     cv2.line(original, landing_point, i, (255,255,255), 1)
-            
-            # print("Coordenates", bunker_coords)
-            # print("bunker dist: ", bunker_dist)
 
             point = landing_point #Refresh the point to be the new landingpoint
             
-
 
 
         else:
@@ -86,14 +78,14 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
                 print(f"Total distance for {player_type}: {lenght_of_hole} [m]")
                 distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, point, green_centerpoint, scale, color="unet")
                 print(f"distance to front green {distance_front_green} [m], distance to back green {distance_back_green} [m]")
-
+                
             elif np.sum(landing_point) == 0 and stroke_number == 1:
                 
                 distance_to_green = stroke.get_distance_landing_point_to_hole(np.array(center_point), green_centerpoint, original.shape, scale)
                 print(f"Total distance for {player_type}: {distance_to_green} [m]")
                 distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, np.array(center_point), green_centerpoint, scale, color="unet")
                 print(f"distance to front green {distance_front_green} [m], distance to back green {distance_back_green} [m]")
-             
+            
 
             break
 

@@ -22,8 +22,14 @@ def get_distance_to_front_and_back_green(image, landing_point, green_centerpoint
     green_contours, _ = cv2.findContours(green, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     #get distance from landing_zone to center of green
     
+    area = 0
+    contour = 0
     for cnt in green_contours:
-        min_dist = get_min_dist_cnt(cnt, green_centerpoint, v, image, scale)
+        temp_area = cv2.contourArea(cnt)
+        if temp_area > area:
+            area = temp_area
+            contour = cnt
+    min_dist = get_min_dist_cnt(contour, green_centerpoint, v, image, scale)
     min_dist.pop()
     distance_front_green = convert.convert_px_to_m(px_length_cm, np.linalg.norm(landing_point-min_dist[0]), scale)
     distance_back_green = convert.convert_px_to_m(px_length_cm, np.linalg.norm(landing_point-min_dist[1]), scale)
@@ -55,7 +61,7 @@ def get_min_dist_cnt(cnt, mp, v, image, scale):
     while(1):
         newPoint = [int(mp[0] + (v[0] * i)), int(mp[1] + (v[1] * i))] #Start at the middle point and go +1 pixel in the vector's direction
         newPoint2 =  [int(mp[0] - (v[0] * i)), int(mp[1] - (v[1] * i))] #Start at the middle point and go -1 pixel in the vector's direction
-
+        
         #Check if any of the newPoints have reached out of bounds and stop the while loop so we don't go to infinity 
         # (This isn't really necesarry since I fixed the cause. but I'm keeping it just in case)
         if newPoint[0] > width or newPoint[0] < 0: # If the x point is outside the image width
@@ -112,41 +118,47 @@ def get_green_size(image, color='unet', scale=1000):
     
     contours, _ = cv2.findContours(green, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
+    area = 0
+    contour = 0
     for cnt in contours:
-        length = get_max_dist_cnt(cnt, image.shape, scale)
-
-        ## Draw a diagonal blue line with thickness of 5 px
-        # cv2.line(image, tuple(max_dist[0]), tuple(max_dist[1]),(255,0,255),1)
-        # cv2.circle(image, tuple(max_dist[0]), 1, (255,0,255), -1)
-        # cv2.circle(image, tuple(max_dist[1]), 1, (255,0,255), -1)
         
-        #quick maths kata
-        mp = midpoint(length[0], length[1])
-
-        #Vector for longest line
-        #    B.x              A.x             B.y              A.y
-        v = [length[1][0] - length[0][0], length[1][1] - length[0][1]]
-        #Normalize the vector
-        mag = math.sqrt(v[0]**2 + v[1]**2)
-        
-        if mag != 0:
-            v[0] /= mag
-            v[1] /= mag
-        
-        #Calculate the perpendicular vector
-        v = [-v[1], v[0]]
+        temp_area = cv2.contourArea(cnt)
+        if temp_area > area:
+            area = temp_area
+            contour = cnt
+            
+    length = get_max_dist_cnt(contour, image.shape, scale)
+    ## Draw a diagonal blue line with thickness of 5 px
+    # cv2.line(image, tuple(max_dist[0]), tuple(max_dist[1]),(255,0,255),1)
+    # cv2.circle(image, tuple(max_dist[0]), 1, (255,0,255), -1)
+    # cv2.circle(image, tuple(max_dist[1]), 1, (255,0,255), -1)
     
-        #Find the intersection between this perpendicular vector and the contour
-        width = get_min_dist_cnt(cnt, mp, v, image, scale)
+    #quick maths kata
+    mp = midpoint(length[0], length[1])
 
-        ## Draw a diagonal line with thickness of 5 px
-    #     cv2.line(image, min_dist[0], min_dist[1],(255,0,255),1)
+    #Vector for longest line
+    #    B.x              A.x             B.y              A.y
+    v = [length[1][0] - length[0][0], length[1][1] - length[0][1]]
+    #Normalize the vector
+    mag = math.sqrt(v[0]**2 + v[1]**2)
+    
+    if mag != 0:
+        v[0] /= mag
+        v[1] /= mag
+    
+    #Calculate the perpendicular vector
+    v = [-v[1], v[0]]
 
-    # cv2.circle(image, mp, 1, (0,255,255), -1)
+    #Find the intersection between this perpendicular vector and the contour
+    width = get_min_dist_cnt(contour, mp, v, image, scale)
+    ## Draw a diagonal line with thickness of 5 px
+#     cv2.line(image, min_dist[0], min_dist[1],(255,0,255),1)
 
-    # cv2.imshow("Image with green sizes", image)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+# cv2.circle(image, mp, 1, (0,255,255), -1)
+
+# cv2.imshow("Image with green sizes", image)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 
     return length, width, mp
 
