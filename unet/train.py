@@ -8,7 +8,7 @@ import numpy as np
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 import segmentation_models_pytorch as smp
-from model import UNET
+from unet.model import UNET
 from utils import (
     load_checkpoint,
     save_checkpoint,
@@ -27,8 +27,8 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 16 
 NUM_EPOCHS = 50
 NUM_WORKERS = 4 
-IMAGE_HEIGHT =  256 # 900 originally
-IMAGE_WIDTH = 416   # 1600 originally
+IMAGE_HEIGHT = 512 # 900 originally
+IMAGE_WIDTH = 832   # 1600 originally
 PIN_MEMORY = True
 # Load/Save Settings
 LOAD_MODEL = False
@@ -36,15 +36,15 @@ LOAD_CHECKPOINT = False
 SAVE_CHECKPOINT = True
 # UNet Model transfer learning 
 ACTIVATION = "softmax2d"
-ENCODER_NAME = "resnet152"
-ENCODER_WEIGHTS="imagenet"
+ENCODER_NAME = "timm-gernet_l"
+ENCODER_WEIGHTS= "imagenet"
 # Directories
 TRAIN_IMG_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\train_images\\" # "/home/ubuntu/project/data/train_images"
 TRAIN_MASK_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\train_masks\\" #"../data/train_masks/"
 VAL_IMG_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\val_images\\" 
 VAL_MASK_DIR = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\val_masks\\" 
-SAVED_IMG_DIR = "data/saved_images/"
-CHECKPOINT_DIR = "saved_models/my_checkpoint.pth.tar"
+SAVED_IMG_DIR = "../data/saved_images/"
+CHECKPOINT_DIR = "../saved_models/my_checkpoint.pth.tar"
 
 def train_fn(loader, model, optimizer, loss_fn, scaler):
     loop = tqdm(loader)

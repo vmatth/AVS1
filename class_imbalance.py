@@ -4,7 +4,7 @@ import glob
 import sys
 import numpy as np
 from tqdm import tqdm
-from handicap_score.get_classes import get_class_coords
+from course_rating.get_classes import get_class_coords
 
 PATH = 'C:\\Users\\jespe\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\2. segmentation masks\\'
 
