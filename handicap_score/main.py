@@ -14,7 +14,9 @@ from natsort import natsorted
 
 
 def main():
-    path='D:\\Users\\jacob\\Master\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\saved_test_images\\*.png'
+    #path='D:\\Users\\jacob\\Master\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\saved_test_images\\*.png'
+    path='C:\\Users\\jespe\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\saved_test_images\\*.png'
+    
     cv_img = []
     for file in natsorted(glob.glob(path)):
         if "__" in file:
@@ -29,8 +31,8 @@ def main():
         prediction = cv2.imread(cv_img[i+1])
     
     
-    # image_path='C:\\Users\\jespe\\OneDrive\\Skrivebord\\AVS1\\11_figure_1500_001.png'
-    # image_path1='C:\\Users\\jespe\\OneDrive\\Skrivebord\\AVS1\\11_prediction_1500_001.png'
+    # image_path='C:\\Users\\jespe\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\saved_test_images\\12__Soehoejlandet Golf ResortP_S_2000_06.png'
+    # image_path1='C:\\Users\\jespe\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\saved_test_images\\12_prediction.png'
     # prediction = cv2.imread(image_path1)
     # original = cv2.imread(image_path)
     
@@ -38,6 +40,7 @@ def main():
 
         #Get scale from the name of the image
         scale = get_scale(cv_img[i])
+        #scale = get_scale(image_path)
         print("scale: ", scale)
         # Get stroke lenghts in meters
         total_s_m, carry_s_m = stroke.get_stroke_lengths(original.shape, 250, 230, scale)
@@ -46,14 +49,12 @@ def main():
         total_b_f, carry_b_f = stroke.get_stroke_lengths(original.shape, 150, 130, scale)
 
         # Get Class coordinates
-        _, _, fairway, _, _ = get_classes.get_class_coords(prediction)
+        _, _, fairway, green, _ = get_classes.get_class_coords(prediction)
         if np.sum(np.array(fairway)) > 0:
             fairway_coords = cv2.findNonZero(fairway)
         else:
             fairway_coords = 0
             
-            
-    
         
         
         #Different players
@@ -63,13 +64,13 @@ def main():
         center_point = []
         center_point = click.get_click_coords(original, center_point)
         #print("centerpoint: ", center_point)
-    
+
         #Get green sizes
         green_length, green_width, green_centerpoint = size.get_green_size(prediction, color='unet', scale=scale)
         #print("green centerpoint: ", green_centerpoint)
         male_point = center_point[0]
         female_point = center_point[1]
-    
+
         bunker_to_obstacles_male_tee, water_to_obstacles_male_tee = distance.distance_to_objects(prediction, male_point, scale, max_distance=convert.convert_px_to_m(pixel_size, total_s_m, scale))
         print(f"Distance to bunkers - male tee: {bunker_to_obstacles_male_tee} [m]")
         print(f"Distance to water - male tee: {water_to_obstacles_male_tee} [m]")
@@ -85,11 +86,13 @@ def main():
             
             print(f"Green length: {green_length[-1]} [m]")
             print(f"Green width: {green_width[-1]} [m]")
+            cv2.imshow("image", original3)
+            cv2.waitKey(0)
+            #cv2.destroyWindow()
         else:
             print("No green was detected")
+    
 
-        cv2.imshow("image", original3)
-        cv2.waitKey(0)
     cv2.destroyWindow()
 
 
