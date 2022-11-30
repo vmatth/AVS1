@@ -109,19 +109,43 @@ def get_green_size(image, color='unet', scale=1000):
     if np.sum(green == 255) == 0:
         print("There is no green on this image")
         return None, None, None
+
+    cv2.imshow("Image with green sizes", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    cv2.imwrite("og.png", image)
     
     contours, _ = cv2.findContours(green, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    cv2.drawContours(image, contours, -1, (0,0,255), 1)
+    cv2.imshow("Image with green sizes", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    cv2.imwrite("GreenEmpty.png", image)
+
 
     for cnt in contours:
         length = get_max_dist_cnt(cnt, image.shape, scale)
 
         ## Draw a diagonal blue line with thickness of 5 px
-        # cv2.line(image, tuple(max_dist[0]), tuple(max_dist[1]),(255,0,255),1)
+        cv2.line(image, tuple(length[0]), tuple(length[1]),(255,0,0),1)
+
+
+        cv2.imshow("Image with green sizes", image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        cv2.imwrite("GreenLength.png", image)
+
         # cv2.circle(image, tuple(max_dist[0]), 1, (255,0,255), -1)
         # cv2.circle(image, tuple(max_dist[1]), 1, (255,0,255), -1)
         
         #quick maths kata
         mp = midpoint(length[0], length[1])
+
+        cv2.circle(image, mp, 1, (0,140,255), -1)
+        cv2.imshow("Image with green sizes", image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        cv2.imwrite("GreenVectorLength.png", image)
 
         #Vector for longest line
         #    B.x              A.x             B.y              A.y
@@ -140,7 +164,11 @@ def get_green_size(image, color='unet', scale=1000):
         width = get_min_dist_cnt(cnt, mp, v, image, scale)
 
         ## Draw a diagonal line with thickness of 5 px
-    #     cv2.line(image, min_dist[0], min_dist[1],(255,0,255),1)
+        cv2.line(image, width[0], width[1],(255,0,255),1)
+        cv2.imshow("Image with green sizes", image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        cv2.imwrite("GreenWidth.png", image)
 
     # cv2.circle(image, mp, 1, (0,255,255), -1)
 
@@ -152,22 +180,26 @@ def get_green_size(image, color='unet', scale=1000):
 
 
 
-# PATH = "C:\\Users\\Vini\\Desktop\\AVS1\\data\\saved_test_images\\"
-# def load_images_from_folder(path):
-#     images = []
-#     for filename in os.listdir(path):
-#         #print("filename: ", filename)
-#         img = cv2.imread(os.path.join(path,filename))
-#         if img is not None:
-#             images.append(img)
-#         # return images
-#     return images
+PATH = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\saved_test_images\\"
+names = []
+def load_images_from_folder(path):
+    images = []
+    for filename in os.listdir(path):
+        #print("filename: ", filename)
+        img = cv2.imread(os.path.join(path,filename))
+        if img is not None:
+            images.append(img)
+            names.append(filename)
+        # return images
+    return images
 
-# counter = 1
-# for image in load_images_from_folder(PATH):
-#     print("Checking green for image [", counter, "]")
-#     max_dist, min_dist, mp = get_green_size(image, color='unet', scale=2000)
-#     print(max_dist, min_dist, mp)
-#     counter += 1
+counter = 1
+for image in load_images_from_folder(PATH):
+    if counter == 133:
+        print("Checking green for image [", counter, "]: ", names[counter-1])
+        max_dist, min_dist, mp = get_green_size(image, color='unet', scale=2000)
+        print(max_dist, min_dist, mp)
+    counter += 1
+
 
 
