@@ -10,10 +10,11 @@ import distance
 from size import get_green_size
 import stroke
 import size
+import csv
 
 
 
-def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint, scale, stroke_distance, player_type, pixel_size):
+def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint, scale, stroke_distance, carry_distance, player_type, pixel_size):
     center_point = point
     stroke_number = 1
     total_distance = 0
@@ -29,19 +30,25 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
                 stroke_distance = stroke_distance-convert.convert_m_to_px(pixel_size, 18.28800, scale)
                 
         intersections = stroke.get_intersections(fairway_coords, point, stroke_distance)
-
+        carry_intersections = stroke.get_intersections(fairway_coords, point, carry_distance)
         
         landing_point = (0,0)
         # Get the shortest intersections in cases where there are multiple intersections with the fairway
-        if intersections :
+        if intersections and carry_intersections :
             intersections = stroke.get_shortest_intersections(intersections, point, green_centerpoint)
-        if intersections : 
+            carry_intersections = stroke.get_shortest_intersections(carry_intersections, point, green_centerpoint)
+        if intersections and carry_intersections : 
             landing_point = stroke.get_landing_point(intersections)
         
             print("landing point: ", landing_point)
             distance_to_green = stroke.get_distance_landing_point_to_hole(landing_point, green_centerpoint, original.shape, scale)
             print(f"Distance to green: {distance_to_green} [m]")
-            fairway_width = stroke.get_fairway_width(intersections, original.shape, scale)
+            fairway_width_t = stroke.get_fairway_width(intersections, original.shape, scale)
+            fairway_width_c = stroke.get_fairway_width(carry_intersections, original.shape, scale)
+            avg_fairway_width = (fairway_width_t+fairway_width_c)/2
+            # print("fairway_width total: ", fairway_width_t)
+            # print("fairway width carry: ", fairway_width_c)
+            print("avg fairway width :", avg_fairway_width)
 
             total_distance += distance.distance_two_points(point, landing_point, original.shape, scale)
             print(f"Total distance for {player_type}: {total_distance} [m]")
@@ -79,6 +86,14 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
                 distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, point, green_centerpoint, scale, color="unet")
                 print(f"distance to front green {distance_front_green} [m], distance to back green {distance_back_green} [m]")
                 
+                row = []
+                row.append(int(lenght_of_hole))
+                with open("distance_calc.csv", "a", newline="") as file:
+                    writer = csv.writer(file)
+                    writer.writerow(row)
+                    file.close()
+
+
             elif np.sum(landing_point) == 0 and stroke_number == 1:
                 
                 distance_to_green = stroke.get_distance_landing_point_to_hole(np.array(center_point), green_centerpoint, original.shape, scale)
@@ -86,6 +101,12 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
                 distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, np.array(center_point), green_centerpoint, scale, color="unet")
                 print(f"distance to front green {distance_front_green} [m], distance to back green {distance_back_green} [m]")
             
+                row = []
+                row.append(int(distance_to_green))
+                with open("distance_calc.csv", "a", newline="") as file:
+                    writer = csv.writer(file)
+                    writer.writerow(row)
+                    file.close()
 
             break
 

@@ -14,4 +14,4 @@ def get_scale(img_path):
         print(f'Houston, we have a problem.')
         return None
     print("Image SCALE: ", img_scale)
-    return int(img_scale)
+    return int(img_scale), img_path.split('__')
