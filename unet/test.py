@@ -8,7 +8,7 @@ import numpy as np
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 import segmentation_models_pytorch as smp
-from model import UNET
+from unet.model import UNET
 from utils import (
     load_checkpoint,
     save_checkpoint,
@@ -31,8 +31,8 @@ from train import(
 )
 
 BEST_M_CHECKPOINT_DIR = "saved_models/best_model.pth.tar"
-TEST_IMG_DIR = "../test_images_trees/"
-TEST_MASK_DIR = "../test_masks/"
+TEST_IMG_DIR = "C:\\Users\\Vini\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\test_images_trees\\"
+TEST_MASK_DIR = "C:\\Users\\Vini\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\Images_data_collection\\1. 1000\\test_masks\\"
 TEST_RES_DIR = "data/saved_test_images/"
 BATCH_SIZE = 1
 

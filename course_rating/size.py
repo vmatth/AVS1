@@ -112,7 +112,7 @@ def get_bunker_size(image, image_px_size, scale=1000, color='unet'):
 def get_green_size(image, color='unet', scale=1000):
     _, _, _, green, _ = get_class_coords(image, color)
 
-    if np.sum(green == 255) < 5:
+    if np.sum(green == 255) == 0:
         print("There is no green on this image")
         return None, None, None
 
