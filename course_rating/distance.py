@@ -1,4 +1,4 @@
-import convert
+from course_rating import convert
 from get_classes import get_class_coords
 import numpy as np
 import cv2

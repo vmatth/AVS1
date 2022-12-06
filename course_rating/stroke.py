@@ -1,15 +1,7 @@
 
 import numpy as np
 import math
-import cv2
-import matplotlib.pyplot as plt
-from get_classes import get_class_coords
-import convert
-from click import get_click_coords
-import draw_elipse
-import distance
-from size import get_green_size
-import do_everything
+from course_rating import convert
 
 # Inputs the total length and carry length of a stroke in yards
 # Returns them in pixels
@@ -105,7 +97,7 @@ def get_fairway_width(intersections, image_shape, scale):
 def get_distance_landing_point_to_hole(starting_point, ending_point, image_shape, scale):
     distance = np.linalg.norm(starting_point-ending_point)
     px_length_cm = convert.get_px_side(image_shape)
-    return convert.convert_px_to_m(px_length_cm, distance, scale) 
+    return int(convert.convert_px_to_m(px_length_cm, distance, scale))
 
 # returns a list of points where the ball will land for each stroke distance
 # with the corresponding fairway width at that landing point.

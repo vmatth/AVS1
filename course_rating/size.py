@@ -2,8 +2,8 @@
 import cv2
 import numpy as np
 from get_classes import get_class_coords
-import convert
-from distance import distance_two_points
+from course_rating import convert
+from course_rating.distance import distance_two_points
 from operator import itemgetter
 import math
 import os
@@ -33,7 +33,7 @@ def get_distance_to_front_and_back_green(image, landing_point, green_centerpoint
     min_dist.pop()
     distance_front_green = convert.convert_px_to_m(px_length_cm, np.linalg.norm(landing_point-min_dist[0]), scale)
     distance_back_green = convert.convert_px_to_m(px_length_cm, np.linalg.norm(landing_point-min_dist[1]), scale)
-    return distance_front_green,distance_back_green
+    return int(distance_front_green), int(distance_back_green)
 
 def midpoint(ptA, ptB):
 	return (int((ptA[0] + ptB[0]) * 0.5), int((ptA[1] + ptB[1]) * 0.5))
@@ -116,17 +116,17 @@ def get_green_size(image, color='unet', scale=1000):
         print("There is no green on this image")
         return None, None, None
 
-    cv2.imshow("Image with green sizes", image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    cv2.imwrite("og.png", image)
+    # cv2.imshow("Image with green sizes", image)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+    # cv2.imwrite("og.png", image)
     
     contours, _ = cv2.findContours(green, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     cv2.drawContours(image, contours, -1, (0,0,255), 1)
-    cv2.imshow("Image with green sizes", image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    cv2.imwrite("GreenEmpty.png", image)
+    # cv2.imshow("Image with green sizes", image)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+    # cv2.imwrite("GreenEmpty.png", image)
 
 
     area = 0
@@ -175,26 +175,26 @@ def get_green_size(image, color='unet', scale=1000):
 
 
 
-PATH = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\saved_test_images\\"
-names = []
-def load_images_from_folder(path):
-    images = []
-    for filename in os.listdir(path):
-        #print("filename: ", filename)
-        img = cv2.imread(os.path.join(path,filename))
-        if img is not None:
-            images.append(img)
-            names.append(filename)
-        # return images
-    return images
+# PATH = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\saved_test_images\\"
+# names = []
+# def load_images_from_folder(path):
+#     images = []
+#     for filename in os.listdir(path):
+#         #print("filename: ", filename)
+#         img = cv2.imread(os.path.join(path,filename))
+#         if img is not None:
+#             images.append(img)
+#             names.append(filename)
+#         # return images
+#     return images
 
-counter = 1
-for image in load_images_from_folder(PATH):
-    if counter == 133:
-        print("Checking green for image [", counter, "]: ", names[counter-1])
-        max_dist, min_dist, mp = get_green_size(image, color='unet', scale=2000)
-        print(max_dist, min_dist, mp)
-    counter += 1
+# counter = 1
+# for image in load_images_from_folder(PATH):
+#     if counter == 133:
+#         print("Checking green for image [", counter, "]: ", names[counter-1])
+#         max_dist, min_dist, mp = get_green_size(image, color='unet', scale=2000)
+#         print(max_dist, min_dist, mp)
+#     counter += 1
 
 
 

@@ -12,7 +12,7 @@ from get_classes import get_class_coords as gcc
 import select_image
 
 from course_rating import size
-
+from course_rating import return_everything
 
 
 class App():
@@ -29,6 +29,8 @@ class App():
         self.raw_image = None # The rgb orthophoto image of a golf hole without extra stuff drawn on it (no circles or lines)
         self.mask_image = None # The mask image (the different classes) of the prediction
         self.scale = 1250 # The scale of the image
+
+        self.playertype = 'scratch_female'
 
         # Values for selecting tees
         self.selecting_tees = False
@@ -66,7 +68,7 @@ class App():
         self.button_calcs.pack(side="right", fill="both", expand="yes", padx="10", pady="10")
 
         self.window.mainloop()
-    
+
     # Sets the selecting tee value to either False or True (the opposite of the current value)
     # This allows the user to select where the tees are using the "click" function
     def set_selecting_tees(self):
@@ -79,7 +81,7 @@ class App():
         print("Selecting tees: ", self.selecting_tees)
         self.tee_counter = 0
         if self.selecting_tees == True:
-            self.button_select_tees.config(text="Select the female tee")
+            self.button_select_tees.config(text="Select the male tee")
         elif self.selecting_tees == False:
             self.button_select_tees.config(text="Select tees")
 
@@ -87,18 +89,18 @@ class App():
     def click(self, event):
         # Only allow clicking tees if selecting_tees is True
         if self.selecting_tees == True:
-            if self.tee_counter == 0: # Female tee
-                self.female_tee = [event.x, event.y] # Get the pixel coordinates
-                self.tee_counter = 1
-                self.button_select_tees.config(text="Select the male tee")
-                # Draw tee circle
-                self.draw_tee_circle(self.female_tee, (250, 113, 103))
-            elif self.tee_counter == 1: # Male tee
+            if self.tee_counter == 0: # Male tee
                 self.male_tee = [event.x, event.y] # Get the pixel coordinates
+                self.tee_counter = 1
+                self.button_select_tees.config(text="Select the female tee")
+                # Draw tee circle
+                self.draw_tee_circle(self.male_tee, (255, 255, 0))
+            elif self.tee_counter == 1: # Female tee
+                self.female_tee = [event.x, event.y] # Get the pixel coordinates
                 self.button_select_tees.config(text="Select tees")
                 self.selecting_tees = False
                 # Draw tee circle
-                self.draw_tee_circle(self.male_tee, (255, 255, 0))
+                self.draw_tee_circle(self.female_tee, (250, 113, 103))
             print("PX: ", event.x)
             print("PY: ", event.y)
             
@@ -136,42 +138,86 @@ class App():
         img = cv2.line(self.current_image, start_point, end_point, color, 3)
         self.update_label_image(img)
 
+    '''
+    def generate_table(self, golf_info):
+        columns = ['golf_feature', 'value']
+        tree = ttk.TreeView(self.window, columns=columns)
+
+        tree.heading('golf_feature', text='Golf Feature')
+        tree.heading('value', text='Value')
+
+        for info in golf_info:
+            tree.insert('', tk.END, value=info)
+        
+        tree.grid(row=0, column=0, sticky='nsew')
+    '''
 
     def show_calcs(self):
-        length, width, mp = size.get_green_size(self.mask_image, scale=1250)
-        
-        strokes = 3
+        length, width, mp = size.get_green_size(self.mask_image, self.scale)
 
-        #length line
-        self.draw_line(length[0], length[1], (255, 255, 0))
-        #width line
+        all_fairway_widths, all_bunker_dists, all_water_dists, landing_points, all_strokes, all_length_of_holes, all_bunker_dists_from_tees, all_water_dists_from_tees, all_distances_to_green = return_everything.return_everything(self.mask_image, self.scale, self.male_tee, self.female_tee)
+        print('Length of all holes: ', all_length_of_holes)
+        print('Type of above: ', type(all_length_of_holes))
+        
+        print('bunker', all_bunker_dists)
+        print('b type', type(all_bunker_dists))
+        print("lord please save us")
+        # print('palyer ', all_bunker_dists[0]) #player 1
+        # print('stroke ', all_bunker_dists[0][0]) #stroke 1
+        # print('obs ',all_bunker_dists[0][0][0]) #obstacle 1
+        # print("obst point", all_bunker_dists[0][0][0][0]) #obstacle 1 POINT
+        # print("obs dist", all_bunker_dists[0][0][0][1]) #obstacle 1 DISTANCE
+
+        print("Distances to green: ", all_distances_to_green)
+        #stracht male, stracht female, bogey male, bogey female
+        
+        player_type={
+            'scratch male' :  0,
+            'scratch female' : 1,
+            'bogey male' : 2,
+            'bogey female' : 3
+        }
+        
+        # TODO: choose player type - doing by user
+        #stroke_num = all_strokes[player_type]
+        stroke_num = all_strokes[player_type['scratch female']]
+
+        #drawing length line of green
+        self.draw_line(length[0], length[1], (242, 121, 94))
+        #drawing width line of green
         self.draw_line(width[0], width[1], (245, 71, 27))
 
-        print("length, width, mp", length, width, mp)
-        print('Length',length[2])
-        set = ttk.Treeview(self.window)
-        set.pack()
-
-        for i in range(strokes):
+        for i in range(stroke_num):
+            self.label_stroke = tk.Label(text=f"Stroke {i + 1}")
+            self.label_stroke.pack()
+            
+            set = ttk.Treeview(self.window)
+            set.pack()
+            
             set['columns']= ('Golf Feature', 'Value')
             set.column("#0", width=0,  stretch=NO)
-            set.column("Golf Feature",anchor=CENTER, width=160)
-            set.column("Value",anchor=CENTER, width=160)
+            set.column("Golf Feature", anchor=CENTER, width=160)
+            set.column("Value", anchor=CENTER, width=160)
 
-            set.heading("#0",text="",anchor=CENTER)
-            set.heading("Golf Feature",text="Golf Feature",anchor=CENTER)
-            set.heading("Value",text="Value [m]",anchor=CENTER)
+            set.heading("#0", text="", anchor=CENTER)
+            set.heading("Golf Feature", text="Golf Feature", anchor=CENTER)
+            set.heading("Value", text="Value [m]", anchor=CENTER)
 
-            set.insert(parent='',index='end',iid=0,text='',
-            values=('Green size',f'{length[2]:.2f} x {width[2]:.2f}'))
-            set.insert(parent='',index='end',iid=1,text='',
-            values=('Obstacle - Landing Point','jack'))
-            set.insert(parent='',index='end',iid=2,text='',
-            values=('Obstacle - Tee','joy'))
-            set.insert(parent='',index='end',iid=3,text='',
-            values=('Final Landing Point - Front of Green','joy'))
-            set.insert(parent='',index='end',iid=4,text='',
-            values=('Final Landing Point - Back of Green','joy'))
+            if i <= (len(all_fairway_widths[stroke_num]) - 1):
+                fairway_width = round(all_fairway_widths[stroke_num][i],2)
+                
+                print('FW : ', fairway_width)
+            else :
+                fairway_width = 'No data'
+            
+            set.insert(parent='',index='end',iid=0,text='', values=('Green size', f'{length[2]:.2f} x {width[2]:.2f}')) #outside
+            set.insert(parent='',index='end',iid=1,text='', values=('Fairway width', f'{fairway_width}'))
+            set.insert(parent='',index='end',iid=2,text='', values=('Length of hole', f'{all_length_of_holes[stroke_num]:.2f}')) #outside
+            set.insert(parent='',index='end',iid=3,text='', values=('Obstacle - Landing Point','jack'))
+            set.insert(parent='',index='end',iid=4,text='', values=('Obstacle - Tee','joy'))
+            set.insert(parent='',index='end',iid=5,text='', values=('Final Landing Point - Front of Green','joy'))
+            set.insert(parent='',index='end',iid=6,text='', values=('Final Landing Point - Back of Green','joy'))
+        
                 
 
 ###
