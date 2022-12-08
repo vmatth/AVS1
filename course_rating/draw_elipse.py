@@ -1,9 +1,6 @@
 import numpy as np
-import math
 import cv2
-import matplotlib.pyplot as plt
-from get_classes import get_class_coords
-import convert
+from course_rating import convert
 
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
@@ -14,12 +11,11 @@ def angle_between(v1, v2):
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
-def draw_elipse(image, landing_point,center_point,player_type,stroke_dist_px,scale):
+def draw_elipse(image, landing_point, center_point, player_type, stroke_dist_px, scale, thickness, color):
     if landing_point is not None:
         px_length_cm = convert.get_px_side(image.shape)    
         stroke_dist= int(convert.convert_px_to_m(px_length_cm,stroke_dist_px, scale))
-        if player_type=="scratch_male":
-            color = (0, 255, 255) #yellow
+        if player_type=="scratch male":
             point_a= (center_point[0],landing_point[1])
             if convert.convert_yards_to_m(230)<stroke_dist<=convert.convert_yards_to_m(250):
                 width_m=convert.convert_yards_to_m(41)
@@ -48,8 +44,7 @@ def draw_elipse(image, landing_point,center_point,player_type,stroke_dist_px,sca
             elif stroke_dist<=convert.convert_yards_to_m(90):
                 width_m=convert.convert_yards_to_m(11)
                 depth_m=convert.convert_yards_to_m(14)
-        elif player_type=="scratch_female":
-            color = (0, 0, 255) #red
+        elif player_type=="scratch female":
             point_a= (center_point[0],landing_point[1])
             if convert.convert_yards_to_m(190)<stroke_dist<=convert.convert_yards_to_m(210):
                 width_m=convert.convert_yards_to_m(34)
@@ -72,8 +67,7 @@ def draw_elipse(image, landing_point,center_point,player_type,stroke_dist_px,sca
             elif stroke_dist<=convert.convert_yards_to_m(90):
                 width_m=convert.convert_yards_to_m(12)
                 depth_m=convert.convert_yards_to_m(15)
-        elif player_type=="bogey_male":
-            color = (0, 255, 255) #yellow
+        elif player_type=="bogey male":
             point_a= (center_point[0],landing_point[1])
             if convert.convert_yards_to_m(170)<stroke_dist<=convert.convert_yards_to_m(200):
                 width_m=convert.convert_yards_to_m(29)
@@ -93,8 +87,7 @@ def draw_elipse(image, landing_point,center_point,player_type,stroke_dist_px,sca
             elif stroke_dist<=convert.convert_yards_to_m(90):
                 width_m=convert.convert_yards_to_m(16)
                 depth_m=convert.convert_yards_to_m(19)
-        elif player_type=="bogey_female":
-            color = (0, 0, 255) #red
+        elif player_type=="bogey female":
             point_a= (center_point[0],landing_point[1])
             if convert.convert_yards_to_m(130)<stroke_dist<=convert.convert_yards_to_m(150):
                 width_m=convert.convert_yards_to_m(24)
@@ -112,8 +105,6 @@ def draw_elipse(image, landing_point,center_point,player_type,stroke_dist_px,sca
             width_m=0
             depth_m=0
 
-        #print("width elipse:",width_m)
-        #print("depth elipse:",depth_m)
         #Calculation of width
         radius_w_px = convert.convert_m_to_px(px_length_cm, width_m, scale)/2
         #Calculation of width
@@ -124,15 +115,13 @@ def draw_elipse(image, landing_point,center_point,player_type,stroke_dist_px,sca
         c=stroke_dist_px
         a= landing_point[0]- point_a[0]
         b= center_point[1]-point_a[1]
-        #print("a : ",a)
-        #print("b :",b)
 
         angle_movement_radians= np.arctan(b/a)
         angle_movement_degrees= 360-(angle_movement_radians*57.296)
         #print("Angle º:", angle_movement_degrees)
-        ellipse=cv2.ellipse(image, landing_point,axes,angle_movement_degrees,0,360,color,1)
+        ellipse=cv2.ellipse(image, landing_point,axes,angle_movement_degrees,0,360,color,thickness)
         return ellipse
-    else :
+    else:
         return image
 
 

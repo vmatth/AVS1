@@ -66,7 +66,7 @@ def get_min_dist_cnt(cnt, mp, v, image, scale):
         # (This isn't really necesarry since I fixed the cause. but I'm keeping it just in case)
         if newPoint[0] > width or newPoint[0] < 0: # If the x point is outside the image width
             if newPoint2[1] > height or newPoint2[1] < 0: #If the y point is outside the image height
-                print("Could not find a green width for this image")
+                #print("Could not find a green width for this image")
                 return None, None, None
 
         for p in cnt:
@@ -113,21 +113,10 @@ def get_green_size(image, color='unet', scale=1000):
     _, _, _, green, _ = get_class_coords(image, color)
 
     if np.sum(green == 255) == 0:
-        print("There is no green on this image")
         return None, None, None
 
-    # cv2.imshow("Image with green sizes", image)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-    # cv2.imwrite("og.png", image)
-    
     contours, _ = cv2.findContours(green, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     cv2.drawContours(image, contours, -1, (0,0,255), 1)
-    # cv2.imshow("Image with green sizes", image)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-    # cv2.imwrite("GreenEmpty.png", image)
-
 
     area = 0
     contour = 0
@@ -139,11 +128,7 @@ def get_green_size(image, color='unet', scale=1000):
             contour = cnt
             
     length = get_max_dist_cnt(contour, image.shape, scale)
-    ## Draw a diagonal blue line with thickness of 5 px
-    # cv2.line(image, tuple(max_dist[0]), tuple(max_dist[1]),(255,0,255),1)
-    # cv2.circle(image, tuple(max_dist[0]), 1, (255,0,255), -1)
-    # cv2.circle(image, tuple(max_dist[1]), 1, (255,0,255), -1)
-    
+
     #quick maths kata
     mp = midpoint(length[0], length[1])
 
@@ -162,39 +147,6 @@ def get_green_size(image, color='unet', scale=1000):
 
     #Find the intersection between this perpendicular vector and the contour
     width = get_min_dist_cnt(contour, mp, v, image, scale)
-    ## Draw a diagonal line with thickness of 5 px
-#     cv2.line(image, min_dist[0], min_dist[1],(255,0,255),1)
-
-# cv2.circle(image, mp, 1, (0,255,255), -1)
-
-# cv2.imshow("Image with green sizes", image)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
 
     return length, width, mp
-
-
-
-# PATH = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\saved_test_images\\"
-# names = []
-# def load_images_from_folder(path):
-#     images = []
-#     for filename in os.listdir(path):
-#         #print("filename: ", filename)
-#         img = cv2.imread(os.path.join(path,filename))
-#         if img is not None:
-#             images.append(img)
-#             names.append(filename)
-#         # return images
-#     return images
-
-# counter = 1
-# for image in load_images_from_folder(PATH):
-#     if counter == 133:
-#         print("Checking green for image [", counter, "]: ", names[counter-1])
-#         max_dist, min_dist, mp = get_green_size(image, color='unet', scale=2000)
-#         print(max_dist, min_dist, mp)
-#     counter += 1
-
-
 
