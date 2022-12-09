@@ -152,6 +152,8 @@ class App():
         self.raw_image = self.current_image.copy() # Save the same image to both variables. (Current image will update with all of the circles and so on)
         self.update_information_label("Opening image.")
         self.measurements_ready = False # Reset the all_fairway_widths value when opening a new picture (this ensures that the measurements have to be be recalculated)
+        self.male_tee = None
+        self.female_tee = None
         # Create a Tkinter label to show the image
         if self.image_label is None:
             print("Creating new Panel")
@@ -177,36 +179,39 @@ class App():
         self.update_label_image(img)        
 
     def draw_dotted_line(self, img, pt1, pt2, color, thickness=1, style='dotted', gap=20):
-        dist =((pt1[0]-pt2[0])**2+(pt1[1]-pt2[1])**2)**.5
-        pts= []
-        for i in  np.arange(0,dist,gap):
-            r=i/dist
-            x=int((pt1[0]*(1-r)+pt2[0]*r)+.5)
-            y=int((pt1[1]*(1-r)+pt2[1]*r)+.5)
-            p = (x,y)
-            pts.append(p)
+        try:
+            dist =((pt1[0]-pt2[0])**2+(pt1[1]-pt2[1])**2)**.5
+            pts= []
+            for i in  np.arange(0,dist,gap):
+                r=i/dist
+                x=int((pt1[0]*(1-r)+pt2[0]*r)+.5)
+                y=int((pt1[1]*(1-r)+pt2[1]*r)+.5)
+                p = (x,y)
+                pts.append(p)
 
-        if style=='dotted':
-            for p in pts:
-                cv2.circle(img ,p,thickness,color,-1)
-        else:
-            s=pts[0]
-            e=pts[0]
-            i=0
-            for p in pts:
-                s=e
-                e=p
-                if i%2==1:
-                    cv2.line(img,s,e,color,thickness)
-                i+=1
+            if style=='dotted':
+                for p in pts:
+                    cv2.circle(img ,p,thickness,color,-1)
+            else:
+                s=pts[0]
+                e=pts[0]
+                i=0
+                for p in pts:
+                    s=e
+                    e=p
+                    if i%2==1:
+                        cv2.line(img,s,e,color,thickness)
+                    i+=1
 
-        self.update_label_image(img)
+            self.update_label_image(img)
+        except:
+            print("Could not draw dotted line")
 
     def reset_information(self):
         for item in self.items:
             item.destroy()
 
-    def generate_table(self, golf_info):
+    def generate_table(self, golf_info, stroke_info):
         columns = ['golf_feature', 'value']
         tree = ttk.Treeview(self.window, columns=columns, selectmode=tk.BROWSE)
         tree.pack()
@@ -219,65 +224,97 @@ class App():
             for info in golf_info:
                 tree.insert('', tk.END, value=info)
 
-        tree.bind("<ButtonRelease-1>", lambda event: self.table_click(event, tree))
+        tree.bind("<ButtonRelease-1>", lambda event: self.table_click(event, tree, stroke_info))
         self.items.append(tree)
-        
-        #tree.grid(row=0, column=0, sticky='nsew')
 
-    def table_click(self, event, tree):
-        print("event: ", event)
-        print("tree:", tree)
+    # Highlighting the features on the image by clicking on the feature in the table
+    def table_click(self, event, tree, stroke):
+        # print("event: ", event)
+        # print("tree:", tree)
+        # print("sstroke: ", stroke)
 
         selected_item = tree.focus()
-        print("selected item", selected_item)
-        print("row item: ", tree.item(selected_item)['values'])
-        
-        # table_features = {
-        #     'Green size' : [self.green_length, self.green_width],
-        #     'Length of hole' : self.all_length_of_holes,
-        #     'Tee - Bunker' : self.all_bunker_dists_from_tees,
-        #     'Tee - Water' : self.all_water_dists_from_tees,
-        #     'Total Stroke Distance' :  self.all_stroke_distances_total,
-        #     'Total Fairway Width' : self.all_fairway_widths_total,
-        #     'Landing Point' : self.landing_points,
-        # }
+        # print("selected item", selected_item)
+        # print("row item: ", tree.item(selected_item)['values'])
 
         self.focus_image = self.current_image.copy()
 
         item = tree.item(selected_item)['values']
         
-        if "Green size" in item:  
-            print("you clicked on green size B)")
+        if self.PLAYER ==  0 or self.PLAYER == 2:
+            point1 = self.male_tee
+            tee = 0
+        else:
+            point1 = self.female_tee
+            tee = 1
+
+        if "Green Size" in item:  
             cv2.line(self.focus_image, self.green_length[0], self.green_length[1], (170, 250, 0), 4)
             cv2.line(self.focus_image, self.green_width[0], self.green_width[1], (170, 250, 0), 4)
-        elif "Length of hole" in item:
-            print("l o h")
+        elif "Length of Hole" in item:
             self.draw_stroke_line(self.focus_image, self.PLAYER, (255, 255, 255), 4)
         elif re.match("Tee - Bunker", item[0]):
-            print('Working regex') 
             bunker_num = int(item[0][-1]) - 1
-            if self.PLAYER ==  0 or self.PLAYER == 2:
-                point1 = self.male_tee
-                tee = 0
-            else:
-                point1 = self.female_tee
-                tee = 1
             point2 = self.all_bunker_dists_from_tees[tee][bunker_num][0]
-            print("point1", point1)
-            print("2", point2)
             self.draw_dotted_line(self.focus_image, point1, point2, (55,50,55), gap=5)
         elif re.match("Tee - Water", item[0]):
-            pass
-        elif "Total Stroke Distance" in item:
-            
-            pass
-        elif "Total Faiway Width":
-            pass
-        
-            
-        
+            water_num = int(item[0][-1]) - 1
+            point2 = self.all_water_dists_from_tees[tee][water_num][0]
+            self.draw_dotted_line(self.focus_image, point1, point2, (55,50,55), gap=5)
+        elif re.match("Landing Point - Bunker", item[0]):
+            bunker_num = int(item[0][-1]) - 1
+            point2 = self.all_bunker_dists[self.PLAYER][stroke][bunker_num][0]
+            self.draw_dotted_line(self.focus_image, self.landing_points[self.PLAYER][stroke], point2, (55,50,55), gap=5)
+        elif re.match("Landing Point - Water", item[0]):
+            water_num = int(item[0][-1]) - 1
+            point2 = self.all_water_dists[self.PLAYER][stroke][water_num][0]
+            self.draw_dotted_line(self.focus_image, self.landing_points[self.PLAYER][stroke], point2, (55,50,55), gap=5)
 
+        elif "Total Stroke Distance" in item:
+            if len(self.landing_points[self.PLAYER]) > 0 and stroke < len(self.landing_points[self.PLAYER]):
+                point2 = self.landing_points[self.PLAYER][stroke]
+            else: 
+                point2 = self.green_center
+
+            if stroke != 0:
+                point1 = self.landing_points[self.PLAYER][stroke - 1]
+            
+            self.draw_line(self.focus_image, point1, point2, (100,100,100), 3)
+
+        elif "Carry Stroke Distance" in item:
+            if len(self.all_landing_points_carry[self.PLAYER]) > 0 and stroke < len(self.all_landing_points_carry[self.PLAYER]):
+                point2 = self.all_landing_points_carry[self.PLAYER][stroke]
+            else: 
+                point2 = self.green_center
+
+            if stroke != 0:
+                point1 = self.landing_points[self.PLAYER][stroke - 1]
+            
+            self.draw_line(self.focus_image, point1, point2, (100,100,100), 3)
+                        
+        elif "Total Fairway Width" in item:
+            self.draw_dotted_line(self.focus_image, self.all_fairway_widths_total[self.PLAYER][stroke][0], self.all_fairway_widths_total[self.PLAYER][stroke][1], (255, 255, 255), 3, style="", gap=8)
         
+        elif "Carry Fairway Width" in item:
+            self.draw_dotted_line(self.focus_image, self.all_fairway_widths_carry[self.PLAYER][stroke][0], self.all_fairway_widths_carry[self.PLAYER][stroke][1], (255, 255, 255), 3, style="", gap=8)
+        # elif "Average Fairway Width" in item:
+        #     self.draw_dotted_line(self.focus_image, self.all_fairway_widths_average[self.PLAYER][stroke][0], self.all_fairway_widths_average[self.PLAYER][stroke][1], (255, 255, 255), 3, style="", gap=8)
+        elif "Starting Point - Front of Green" in item:
+            if stroke != 0:
+                point1 = self.landing_points[self.PLAYER][stroke - 1]
+            point2 = self.all_points_to_green[self.PLAYER][stroke][0]
+            self.draw_dotted_line(self.focus_image, point1, point2, (73, 227, 83), gap=5)
+        elif "Starting Point - Middle of Green" in item:
+            if stroke != 0:
+                point1 = self.landing_points[self.PLAYER][stroke - 1]
+            point2 = self.green_center
+            self.draw_dotted_line(self.focus_image, point1, point2, (73, 227, 83), gap=5)
+        elif "Starting Point - Back of Green" in item:
+            if stroke != 0:
+                point1 = self.landing_points[self.PLAYER][stroke - 1]
+            point2 = self.all_points_to_green[self.PLAYER][stroke][1]
+            self.draw_dotted_line(self.focus_image, point1, point2, (73, 227, 83), gap=5)
+            
         self.update_label_image(self.focus_image)    
 
 
@@ -337,7 +374,7 @@ class App():
         # Calculate the green size
         self.green_length, self.green_width, self.green_center = size.get_green_size(self.mask_image.copy(), scale=self.scale)
         # Calculate everything else
-        self.all_fairway_widths_total, self.all_fairway_widths_carry, self.all_fairway_widths_average, self.all_bunker_dists, self.all_water_dists, self.landing_points, self.all_strokes, self.all_length_of_holes, self.all_bunker_dists_from_tees, self.all_water_dists_from_tees, self.all_distances_to_green, self.all_stroke_distances_total, self.all_stroke_distances_carry = return_everything.return_everything(self.mask_image.copy(), self.scale, self.male_tee, self.female_tee)
+        self.all_fairway_widths_total, self.all_fairway_widths_carry, self.all_fairway_widths_average, self.all_bunker_dists, self.all_water_dists, self.landing_points, self.all_strokes, self.all_length_of_holes, self.all_bunker_dists_from_tees, self.all_water_dists_from_tees, self.all_distances_to_green, self.all_stroke_distances_total, self.all_stroke_distances_carry, self.all_landing_points_carry, self.all_points_to_green = return_everything.return_everything(self.mask_image.copy(), self.scale, self.male_tee, self.female_tee)
         self.measurements_ready = True
         return True
 
@@ -473,10 +510,10 @@ class App():
         # Table stuff
         general_data = []
         
-        green_string = ('Green size', f'{self.green_length[2]:.2f} x {self.green_width[2]:.2f}')
+        green_string = ('Green Size', f'{self.green_length[2]:.2f} x {self.green_width[2]:.2f}')
         general_data.append(green_string)
 
-        hole_string = ('Length of hole', f'{self.all_length_of_holes[PLAYER]:.2f}')
+        hole_string = ('Length of Hole', f'{self.all_length_of_holes[PLAYER]:.2f}')
         general_data.append(hole_string)
 
         if PLAYER == 0 or PLAYER == 2:
@@ -492,7 +529,7 @@ class App():
         self.items.append(self.label_general)
         
         #self.general_table = 
-        self.generate_table(general_data)
+        self.generate_table(general_data, -1)
         
         print('fairway width: ', self.all_fairway_widths_total)
         
@@ -502,8 +539,8 @@ class App():
             self.items.append(self.label_stroke)
             
             stroke_data = []
-            stroke_data.append(('Total Stroke Distance ', f'{self.all_stroke_distances_total[PLAYER][i]:.2f}'))
-            stroke_data.append(('Carry Stroke Distance ', f'{self.all_stroke_distances_carry[PLAYER][i]:.2f}'))
+            stroke_data.append(('Total Stroke Distance', f'{self.all_stroke_distances_total[PLAYER][i]:.2f}'))
+            stroke_data.append(('Carry Stroke Distance', f'{self.all_stroke_distances_carry[PLAYER][i]:.2f}'))
 
             self.get_fairway_dist(self.all_fairway_widths_total, stroke_data, 'Total Fairway Width', PLAYER, i)
             self.get_fairway_dist(self.all_fairway_widths_carry, stroke_data, 'Carry Fairway Width', PLAYER, i)
@@ -524,17 +561,8 @@ class App():
             stroke_data.append(middle_str)
             stroke_data.append(back_str)
 
-            self.generate_table(stroke_data)
+            self.generate_table(stroke_data, i) #<- The stroke nr 
 
-        print(15 * '-')
-        print('wtf is this: ', self.items)
-        print(15 * '-')
-        print('wtf is this: ', self.items[0])
-        print('wtf is this: ', type(self.items[0]))
-        print(15 * '-')
-        print('wtf is this: ', self.items[1])
-        print('wtf is this: ', type(self.items[1]))
-        print(15 * '-')
 
 ###
 # 4 Player types

@@ -19,6 +19,8 @@ def run_all_calcs(prediction, fairway_coords, point, green_centerpoint, scale, s
     distances_to_green = []
     stroke_distances_total = []
     stroke_distances_carry = []
+    landing_points_carry = []
+    points_to_green = []
     while(True):
         if player_type=="scratch_male" or player_type=="bogey_male":
             if stroke_number == 2:
@@ -44,6 +46,8 @@ def run_all_calcs(prediction, fairway_coords, point, green_centerpoint, scale, s
         if intersections and carry_intersections : 
             landing_point = stroke.get_landing_point(intersections)
             landing_points.append(landing_point)
+            landing_point_carry = stroke.get_landing_point(carry_intersections)
+            landing_points_carry.append(landing_point_carry)
             distance_to_green = stroke.get_distance_landing_point_to_hole(landing_point, green_centerpoint, prediction.shape, scale)
             fairway_width_t, edge_point_t_1, edge_point_t_2 = stroke.get_fairway_width(intersections, prediction.shape, scale)
             fairway_width_c, edge_point_c_1, edge_point_c_2 = stroke.get_fairway_width(carry_intersections, prediction.shape, scale)
@@ -59,24 +63,28 @@ def run_all_calcs(prediction, fairway_coords, point, green_centerpoint, scale, s
 
             #Get the distance from the landingpoint to the green for each stroke
             distance_to_green = stroke.get_distance_landing_point_to_hole(np.array(point), green_centerpoint, prediction.shape, scale)
-            distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, np.array(point), green_centerpoint, scale, color="unet")
+            distance_front_green, point_front_green, distance_back_green, point_back_green = size.get_distance_to_front_and_back_green(prediction, np.array(point), green_centerpoint, scale, color="unet")
             distances_to_green.append([distance_front_green, distance_to_green, distance_back_green])
+            points_to_green.append([point_front_green, point_back_green])
 
             point = landing_point #Refresh the point to be the new landingpoint
         else:
             if np.sum(landing_point) == 0 and stroke_number > 1:
                 distance_to_green = stroke.get_distance_landing_point_to_hole(np.array(point), green_centerpoint, prediction.shape, scale)
                 lenght_of_hole = total_distance + distance_to_green
-                distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, point, green_centerpoint, scale, color="unet")
+                distance_front_green, point_front_green, distance_back_green, point_back_green = size.get_distance_to_front_and_back_green(prediction, point, green_centerpoint, scale, color="unet")
                 distances_to_green.append([distance_front_green, distance_to_green, distance_back_green])
+                points_to_green.append([point_front_green, point_back_green])
 
             elif np.sum(landing_point) == 0 and stroke_number == 1:
                 distance_to_green = stroke.get_distance_landing_point_to_hole(np.array(center_point), green_centerpoint, prediction.shape, scale)
-                distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, np.array(center_point), green_centerpoint, scale, color="unet")
+                distance_front_green, point_front_green, distance_back_green, point_back_green = size.get_distance_to_front_and_back_green(prediction, np.array(center_point), green_centerpoint, scale, color="unet")
                 lenght_of_hole = distance_to_green
                 distances_to_green.append([distance_front_green, distance_to_green, distance_back_green])
+                points_to_green.append([point_front_green, point_back_green])
+
             break
 
 
         stroke_number += 1
-    return fairway_widths_total, fairway_widths_carry, fairway_widths_average, bunker_dists, water_dists, landing_points, stroke_number, lenght_of_hole, distances_to_green, stroke_distances_total, stroke_distances_carry
+    return fairway_widths_total, fairway_widths_carry, fairway_widths_average, bunker_dists, water_dists, landing_points, stroke_number, lenght_of_hole, distances_to_green, stroke_distances_total, stroke_distances_carry, landing_points_carry, points_to_green

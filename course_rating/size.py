@@ -33,7 +33,7 @@ def get_distance_to_front_and_back_green(image, landing_point, green_centerpoint
     min_dist.pop()
     distance_front_green = convert.convert_px_to_m(px_length_cm, np.linalg.norm(landing_point-min_dist[0]), scale)
     distance_back_green = convert.convert_px_to_m(px_length_cm, np.linalg.norm(landing_point-min_dist[1]), scale)
-    return int(distance_front_green), int(distance_back_green)
+    return int(distance_front_green), min_dist[0], int(distance_back_green), min_dist[1]
 
 def midpoint(ptA, ptB):
 	return (int((ptA[0] + ptB[0]) * 0.5), int((ptA[1] + ptB[1]) * 0.5))
