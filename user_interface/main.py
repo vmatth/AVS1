@@ -1,6 +1,7 @@
 from tkinter import *
 import tkinter as tk
 from  tkinter import ttk
+import customtkinter as ctk
 import model_utils
 from tkinter import filedialog
 import cv2
@@ -12,12 +13,36 @@ from get_classes import get_class_coords as gcc
 import select_image
 import re
 
+import sys, os
+MY_PATH = 'C:\\Users\\Kata\\Documents\\AAU\\CE7\\Project\\AVS1'
+sys.path.append(MY_PATH)
+
 from course_rating import size
 from course_rating import return_everything
 from course_rating import draw_elipse
 
-class App():
+import time
+
+ctk.set_appearance_mode("System")
+ctk.set_default_color_theme("blue")
+
+class App(ctk.CTk):
     def __init__(self):
+        super().__init__()
+
+        self.title("Golf Course Rating System")
+        #self.winfo_screenwidth
+        #self.winfo_screenheight
+        self.geometry(f"{900}x{600}")
+        
+        # set grid layout 4x2
+        self.grid_rowconfigure((0,1,3), weight=0)
+        self.grid_rowconfigure(2, weight=1)
+        #self.grid_rowconfigure(3, weight=0)
+        self.grid_columnconfigure(1, weight=1)
+        
+        button_font = ctk.CTkFont(family="Segoe UI", size=12, weight="normal")
+        
         # Values for image information
         self.current_image = None # The current rgb orthophoto image of a golf hole displayed on the GUI (including all of the stuff drawn on it e.g tee circles)
         self.raw_image = None # The rgb orthophoto image of a golf hole without extra stuff drawn on it (no circles or lines)
@@ -41,56 +66,113 @@ class App():
         self.model = model_utils.load_model()
 
         # Graphical User Interface
-        self.window = tk.Tk()
+        #self.window = ctk.CTk()
+        #ctk.set_default_color_theme("blue") 
 
         # Top frame for the menu buttons
-        top = Frame(self.window)
-        top.pack(side=TOP, anchor=NW)
+        # top = Frame(self.window)
+        # top.pack(side=TOP, anchor=NW)
 
+        # Top bar frame for buttons on the top of the window
+        #width=900, height=40
+        self.topbar_frame = ctk.CTkFrame(self, corner_radius=0)
+        self.topbar_frame.grid(row=0, column=0, columnspan=2, sticky="nsew")
+        self.topbar_frame.grid_columnconfigure(3, weight=0)
+        
+        # Info bar frame
+        self.info_bar = ctk.CTkFrame(self, width=900, height=40, corner_radius=0)
+        self.info_bar.grid(row=1, column=0, columnspan=2, sticky="nsew")
+        self.info_bar.grid_columnconfigure(1, weight=1)
+        
+        # Image frame
+        self.image_frame = ctk.CTkFrame(self, corner_radius=0)
+        self.image_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")
+
+        # Calculation table frame
+        self.table_frame = ctk.CTkFrame(self, corner_radius=0)
+        self.table_frame.grid(row=2, column=1, columnspan=1, sticky="nsew")
+
+        # Bottom bar frame for buttons on the top of the window
+        # width=900, height=40
+        self.bottombar_frame = ctk.CTkFrame(self, corner_radius=0)
+        self.bottombar_frame.grid(row=3, column=0, columnspan=2, sticky="nsew")
+        self.bottombar_frame.grid_columnconfigure(3, weight=0)
+
+        
         # Bottom frame
-        bot = Frame(self.window)
-        bot.pack(side=BOTTOM, anchor=S)
+        # bot = Frame(self.window)
+        # bot.pack(side=BOTTOM, anchor=S)
+
+        # Button for opening images
+        self.topbar_button1 = ctk.CTkButton(self.topbar_frame, text="Open", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda:self.show_prediction_image(self.model))
+        self.topbar_button1.grid(padx=5, pady=10, row=0, column=1)
 
         # Open button to select orthophoto of golf course
-        self.button_image = tk.Button(text="Open", width=8, height=2, command=lambda:self.show_prediction_image(self.model))
-        self.button_image.pack(in_=top, side=LEFT)
+        # self.button_image = tk.Button(text="Open", width=8, height=2, command=lambda:self.show_prediction_image(self.model))
+        # self.button_image.pack(in_=top, side=LEFT)
 
+        # Button for getting tees
+        self.topbar_button2 = ctk.CTkButton(self.topbar_frame, text="Tees", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda:self.set_selecting_tees())
+        self.topbar_button2.grid(padx=5, pady=10, row=0, column=2)
+        
         # Select tees button
-        self.button_select_tees = tk.Button(text="Tees", width=8, height=2, command=lambda:self.set_selecting_tees())
-        self.button_select_tees.pack(in_=top, side=LEFT)
+        # self.button_select_tees = tk.Button(text="Tees", width=8, height=2, command=lambda:self.set_selecting_tees())
+        # self.button_select_tees.pack(in_=top, side=LEFT)
+        
+        # Entry for scale value
+        self.entry_scale = ctk.CTkEntry(self.topbar_frame, width=150, height=32, placeholder_text="Scale")
+        self.entry_scale.grid(padx=5, pady=10, row=0, column=3, sticky="nsew")
 
         # Input scale field
-        self.entry_scale = tk.Entry(self.window) 
-        self.entry_scale.pack(in_=top, side=LEFT)
+        # self.entry_scale = tk.Entry(self.window) 
+        # self.entry_scale.pack(in_=top, side=LEFT)
 
+        # self.topbar_button3 = ctk.CTkButton(self.topbar_frame, text="Calculate", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda: self.show_calcs())
+        # self.topbar_button3.grid(padx=5, pady=10, row=0, column=4)
+        
         # self.button_calcs = tk.Button(text="Calculate", width = 8, height=2, command=lambda: self.calculate_measurements())
         # self.button_calcs.pack(in_=top, side=LEFT)
 
+        # Label info
+        self.label_info = ctk.CTkLabel(self.info_bar, text="Open an image containing a single golf hole.", font=ctk.CTkFont(family="Segoe UI",size=14))
+        self.label_info.grid(padx=30, pady=5, row=0, column=0, sticky="nsew")
 
-        self.label_info = tk.Label(text="Open an image containing a single golf hole.")
-        self.label_info.pack()
+        # self.label_info = tk.Label(text="Open an image containing a single golf hole.")
+        # self.label_info.pack()
 
-        self.button_scratch_male = tk.Button(text="Scratch Male", width = 18, height=2, command=lambda: self.change_player_type("scratch male"))
-        self.button_scratch_male.pack(in_=bot, side=LEFT)
+        self.bottombar_button1 = ctk.CTkButton(self.bottombar_frame, text="Scratch male", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda: self.change_player_type("scratch male"))
+        self.bottombar_button1.grid(padx=5, pady=10, row=0, column=1)
 
-        self.button_scratch_female = tk.Button(text="Scratch Female", width = 18, height=2, command=lambda: self.change_player_type("scratch female"))
-        self.button_scratch_female.pack(in_=bot, side=LEFT)
+        self.bottombar_button2 = ctk.CTkButton(self.bottombar_frame, text="Scratch female", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda: self.change_player_type("scratch female"))
+        self.bottombar_button2.grid(padx=5, pady=10, row=0, column=2)
 
-        self.button_bogey_male = tk.Button(text="Bogey Male", width = 18, height=2, command=lambda: self.change_player_type("bogey male"))
-        self.button_bogey_male.pack(in_=bot, side=LEFT)
+        self.bottombar_button3 = ctk.CTkButton(self.bottombar_frame, text="Bogey male", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda: self.change_player_type("bogey male"))
+        self.bottombar_button3.grid(padx=5, pady=10, row=0, column=3)
 
-        self.button_bogey_female = tk.Button(text="Bogey Female", width = 18, height=2, command=lambda: self.change_player_type("bogey female"))
-        self.button_bogey_female.pack(in_=bot, side=LEFT)       
+        self.bottombar_button4 = ctk.CTkButton(self.bottombar_frame, text="Bogey female", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda: self.change_player_type("bogey female"))
+        self.bottombar_button4.grid(padx=5, pady=10, row=0, column=4)
+
+        #self.button_scratch_male = tk.Button(text="Scratch Male", width = 18, height=2, command=lambda: self.change_player_type("scratch male"))
+        #self.button_scratch_male.pack(in_=bot, side=LEFT)
+
+        # self.button_scratch_female = tk.Button(text="Scratch Female", width = 18, height=2, command=lambda: self.change_player_type("scratch female"))
+        # self.button_scratch_female.pack(in_=bot, side=LEFT)
+
+        # self.button_bogey_male = tk.Button(text="Bogey Male", width = 18, height=2, command=lambda: self.change_player_type("bogey male"))
+        # self.button_bogey_male.pack(in_=bot, side=LEFT)
+
+        # self.button_bogey_female = tk.Button(text="Bogey Female", width = 18, height=2, command=lambda: self.change_player_type("bogey female"))
+        # self.button_bogey_female.pack(in_=bot, side=LEFT)       
 
         # Empty label for the golf hole
         self.image_label = None
 
-        self.window.mainloop()
+        #self.window.mainloop()
 
 
     # Updates the info label with the given text
     def update_information_label(self, txt):
-        self.label_info.config(text=txt)
+        self.label_info.configure(text=txt)
 
     # Sets the selecting tee value to either False or True (the opposite of the current value)
     # This allows the user to select where the tees are using the "click" function
@@ -157,16 +239,19 @@ class App():
         # Create a Tkinter label to show the image
         if self.image_label is None:
             print("Creating new Panel")
-            self.image_label = Label(image=PIL_image)
+            self.image_label = ctk.CTkLabel(self.image_frame, text="", image=PIL_image)
             self.image_label.image = PIL_image
-            self.image_label.pack(side="left", padx=10, pady=10)
+            self.image_label.grid(padx=10, pady=10, row=0, column=1)
+
+            #self.image_label.pack(side="left", padx=10, pady=10)
             self.image_label.bind("<Button-1>", self.click)
         # Use same Tkinter label (if choosing a new image, after selecting one)
         else:
             print("Using same Panel")
-            self.image_label.configure(image=PIL_image)
+            self.image_label.configure(text="", image=PIL_image)
             self.image_label.image = PIL_image
-            self.image_label.pack(side="left", padx=10, pady=10)
+            self.image_label.grid(padx=10, pady=10, row=0, column=1)
+            #self.image_label.pack(side="left", padx=10, pady=10)
     
     def draw_line(self, img, start_point, end_point, color, thickness):
         img = cv2.line(img, start_point, end_point, color, thickness)
@@ -209,12 +294,16 @@ class App():
 
     def reset_information(self):
         for item in self.items:
-            item.destroy()
+            #item.destroy()
+            item.grid_remove()
 
     def generate_table(self, golf_info, stroke_info):
+        print("Generating table...")
+
         columns = ['golf_feature', 'value']
-        tree = ttk.Treeview(self.window, columns=columns, selectmode=tk.BROWSE)
-        tree.pack()
+        tree = ttk.Treeview(self.table_frame, columns=columns, selectmode=tk.BROWSE)
+        tree.grid()
+        
         tree.column("#0", width=0,  stretch=NO)
         tree.heading('#0', text="", anchor=CENTER)
         tree.heading('golf_feature', text='Golf Feature', anchor=CENTER)
@@ -360,6 +449,8 @@ class App():
         return info_lst
 
     def calculate_measurements(self):
+        print("Calculating measurements...")
+
         if(self.raw_image is None):
             self.update_information_label("Please open an image first")
             return False
@@ -373,8 +464,12 @@ class App():
             
         # Calculate the green size
         self.green_length, self.green_width, self.green_center = size.get_green_size(self.mask_image.copy(), scale=self.scale)
+        print("Almost done.")
+        print(time.localtime())
         # Calculate everything else
         self.all_fairway_widths_total, self.all_fairway_widths_carry, self.all_fairway_widths_average, self.all_bunker_dists, self.all_water_dists, self.landing_points, self.all_strokes, self.all_length_of_holes, self.all_bunker_dists_from_tees, self.all_water_dists_from_tees, self.all_distances_to_green, self.all_stroke_distances_total, self.all_stroke_distances_carry, self.all_landing_points_carry, self.all_points_to_green = return_everything.return_everything(self.mask_image.copy(), self.scale, self.male_tee, self.female_tee)
+        print("Finished!")
+        print(time.localtime())
         self.measurements_ready = True
         return True
 
@@ -454,7 +549,6 @@ class App():
         
         #Reset all information
         self.reset_information()
-        
     
         PLAYER = player_type[self.playertype]
         STROKE = self.all_strokes[PLAYER]
@@ -524,8 +618,9 @@ class App():
             general_data = self.get_tee_obs_dist(general_data, 'Tee - Bunker', self.all_bunker_dists_from_tees[1])
             general_data = self.get_tee_obs_dist(general_data, 'Tee - Water', self.all_water_dists_from_tees[1]) 
 
-        self.label_general = tk.Label(text=f"General data")
-        self.label_general.pack()
+        self.label_general = ctk.CTkLabel(self.table_frame, text=f"General data")
+        self.label_general.grid()
+        #self.label_general.pack()
         self.items.append(self.label_general)
         
         #self.general_table = 
@@ -534,8 +629,9 @@ class App():
         print('fairway width: ', self.all_fairway_widths_total)
         
         for i in range(STROKE):
-            self.label_stroke = tk.Label(text=f"Stroke {i + 1}")
-            self.label_stroke.pack()
+            self.label_stroke = ctk.CTkLabel(self.table_frame, text=f"Stroke {i + 1}")
+            self.label_stroke.grid()
+            #self.label_stroke.pack()
             self.items.append(self.label_stroke)
             
             stroke_data = []
@@ -582,4 +678,5 @@ class App():
 
 if __name__ == "__main__":
     print("Starting the Golf Course Rating System")
-    App()
+    app = App()
+    app.mainloop()
