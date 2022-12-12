@@ -31,16 +31,17 @@ class App(ctk.CTk):
         super().__init__()
 
         self.title("Golf Course Rating System")
+        # TODO : windowsize match to screensize
         #self.winfo_screenwidth
         #self.winfo_screenheight
         self.geometry(f"{900}x{600}")
         
-        # set grid layout 4x2
+        # Setting grid layout 4x2
         self.grid_rowconfigure((0,1,3), weight=0)
         self.grid_rowconfigure(2, weight=1)
-        #self.grid_rowconfigure(3, weight=0)
         self.grid_columnconfigure(1, weight=1)
         
+        # Setting default button font
         button_font = ctk.CTkFont(family="Segoe UI", size=12, weight="normal")
         
         # Values for image information
@@ -51,6 +52,8 @@ class App(ctk.CTk):
         self.scale = None # The scale of the image
         self.items = []
         self.general_table = None
+        self.tabs = [] # Tabs 
+        self.HIGHLIGHT_COLOR = (0, 222, 224) # highlighting features on image
 
         # Values for measurements
         self.playertype = 'scratch female'
@@ -65,16 +68,7 @@ class App(ctk.CTk):
         # Load unet model
         self.model = model_utils.load_model()
 
-        # Graphical User Interface
-        #self.window = ctk.CTk()
-        #ctk.set_default_color_theme("blue") 
-
-        # Top frame for the menu buttons
-        # top = Frame(self.window)
-        # top.pack(side=TOP, anchor=NW)
-
         # Top bar frame for buttons on the top of the window
-        #width=900, height=40
         self.topbar_frame = ctk.CTkFrame(self, corner_radius=0)
         self.topbar_frame.grid(row=0, column=0, columnspan=2, sticky="nsew")
         self.topbar_frame.grid_columnconfigure(3, weight=0)
@@ -93,53 +87,31 @@ class App(ctk.CTk):
         self.table_frame.grid(row=2, column=1, columnspan=1, sticky="nsew")
 
         # Bottom bar frame for buttons on the top of the window
-        # width=900, height=40
         self.bottombar_frame = ctk.CTkFrame(self, corner_radius=0)
         self.bottombar_frame.grid(row=3, column=0, columnspan=2, sticky="nsew")
         self.bottombar_frame.grid_columnconfigure(3, weight=0)
-
-        
-        # Bottom frame
-        # bot = Frame(self.window)
-        # bot.pack(side=BOTTOM, anchor=S)
 
         # Button for opening images
         self.topbar_button1 = ctk.CTkButton(self.topbar_frame, text="Open", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda:self.show_prediction_image(self.model))
         self.topbar_button1.grid(padx=5, pady=10, row=0, column=1)
 
-        # Open button to select orthophoto of golf course
-        # self.button_image = tk.Button(text="Open", width=8, height=2, command=lambda:self.show_prediction_image(self.model))
-        # self.button_image.pack(in_=top, side=LEFT)
-
-        # Button for getting tees
+        # Button for selecting tees
         self.topbar_button2 = ctk.CTkButton(self.topbar_frame, text="Tees", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda:self.set_selecting_tees())
         self.topbar_button2.grid(padx=5, pady=10, row=0, column=2)
         
-        # Select tees button
-        # self.button_select_tees = tk.Button(text="Tees", width=8, height=2, command=lambda:self.set_selecting_tees())
-        # self.button_select_tees.pack(in_=top, side=LEFT)
-        
-        # Entry for scale value
+        # Input scale field
         self.entry_scale = ctk.CTkEntry(self.topbar_frame, width=150, height=32, placeholder_text="Scale")
         self.entry_scale.grid(padx=5, pady=10, row=0, column=3, sticky="nsew")
-
-        # Input scale field
-        # self.entry_scale = tk.Entry(self.window) 
-        # self.entry_scale.pack(in_=top, side=LEFT)
-
-        # self.topbar_button3 = ctk.CTkButton(self.topbar_frame, text="Calculate", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda: self.show_calcs())
-        # self.topbar_button3.grid(padx=5, pady=10, row=0, column=4)
-        
-        # self.button_calcs = tk.Button(text="Calculate", width = 8, height=2, command=lambda: self.calculate_measurements())
-        # self.button_calcs.pack(in_=top, side=LEFT)
 
         # Label info
         self.label_info = ctk.CTkLabel(self.info_bar, text="Open an image containing a single golf hole.", font=ctk.CTkFont(family="Segoe UI",size=14))
         self.label_info.grid(padx=30, pady=5, row=0, column=0, sticky="nsew")
 
-        # self.label_info = tk.Label(text="Open an image containing a single golf hole.")
-        # self.label_info.pack()
+        # Setting tab view
+        self.tabview = ctk.CTkTabview(self.table_frame, width=250)
+        self.tabview.grid(row=0, column=1)
 
+        # Bottom buttons for changing player type
         self.bottombar_button1 = ctk.CTkButton(self.bottombar_frame, text="Scratch male", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda: self.change_player_type("scratch male"))
         self.bottombar_button1.grid(padx=5, pady=10, row=0, column=1)
 
@@ -151,18 +123,6 @@ class App(ctk.CTk):
 
         self.bottombar_button4 = ctk.CTkButton(self.bottombar_frame, text="Bogey female", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda: self.change_player_type("bogey female"))
         self.bottombar_button4.grid(padx=5, pady=10, row=0, column=4)
-
-        #self.button_scratch_male = tk.Button(text="Scratch Male", width = 18, height=2, command=lambda: self.change_player_type("scratch male"))
-        #self.button_scratch_male.pack(in_=bot, side=LEFT)
-
-        # self.button_scratch_female = tk.Button(text="Scratch Female", width = 18, height=2, command=lambda: self.change_player_type("scratch female"))
-        # self.button_scratch_female.pack(in_=bot, side=LEFT)
-
-        # self.button_bogey_male = tk.Button(text="Bogey Male", width = 18, height=2, command=lambda: self.change_player_type("bogey male"))
-        # self.button_bogey_male.pack(in_=bot, side=LEFT)
-
-        # self.button_bogey_female = tk.Button(text="Bogey Female", width = 18, height=2, command=lambda: self.change_player_type("bogey female"))
-        # self.button_bogey_female.pack(in_=bot, side=LEFT)       
 
         # Empty label for the golf hole
         self.image_label = None
@@ -296,12 +256,21 @@ class App(ctk.CTk):
         for item in self.items:
             #item.destroy()
             item.grid_remove()
+        
+        for tab_name in self.tabs:
+            self.tabview.delete(tab_name)
 
-    def generate_table(self, golf_info, stroke_info):
+        self.tabs = []
+
+    def generate_table(self, golf_info, table_name, stroke_info):
         print("Generating table...")
-
+        
+        # Adding new tab
+        self.tabview.add(table_name)
+        self.tabs.append(table_name)
+    
         columns = ['golf_feature', 'value']
-        tree = ttk.Treeview(self.table_frame, columns=columns, selectmode=tk.BROWSE)
+        tree = ttk.Treeview(self.tabview.tab(table_name), columns=columns, selectmode=tk.BROWSE)
         tree.grid()
         
         tree.column("#0", width=0,  stretch=NO)
@@ -618,21 +587,21 @@ class App(ctk.CTk):
             general_data = self.get_tee_obs_dist(general_data, 'Tee - Bunker', self.all_bunker_dists_from_tees[1])
             general_data = self.get_tee_obs_dist(general_data, 'Tee - Water', self.all_water_dists_from_tees[1]) 
 
-        self.label_general = ctk.CTkLabel(self.table_frame, text=f"General data")
-        self.label_general.grid()
+        #self.label_general = ctk.CTkLabel(self.table_frame, text=f"General data")
+        #self.label_general.grid()
         #self.label_general.pack()
-        self.items.append(self.label_general)
+        #self.items.append(self.label_general)
         
         #self.general_table = 
-        self.generate_table(general_data, -1)
+        self.generate_table(general_data, "General data", -1)
         
         print('fairway width: ', self.all_fairway_widths_total)
         
         for i in range(STROKE):
-            self.label_stroke = ctk.CTkLabel(self.table_frame, text=f"Stroke {i + 1}")
-            self.label_stroke.grid()
+            #self.label_stroke = ctk.CTkLabel(self.table_frame, text=f"Stroke {i + 1}")
+            #self.label_stroke.grid()
             #self.label_stroke.pack()
-            self.items.append(self.label_stroke)
+            #self.items.append(self.label_stroke)
             
             stroke_data = []
             stroke_data.append(('Total Stroke Distance', f'{self.all_stroke_distances_total[PLAYER][i]:.2f}'))
@@ -657,7 +626,7 @@ class App(ctk.CTk):
             stroke_data.append(middle_str)
             stroke_data.append(back_str)
 
-            self.generate_table(stroke_data, i) #<- The stroke nr 
+            self.generate_table(stroke_data,f"Stroke {i+1}", i) #<- The stroke nr 
 
 
 ###
