@@ -14,7 +14,8 @@ import select_image
 import re
 
 import sys, os
-MY_PATH = 'C:\\Users\\Kata\\Documents\\AAU\\CE7\\Project\\AVS1'
+
+MY_PATH = '.\\AVS1'
 sys.path.append(MY_PATH)
 
 from course_rating import size
