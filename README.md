@@ -8,7 +8,9 @@ This repository contains implementation for our paper "Semantic Segmentation of 
     --"utils.py" handles various functions such as loading images, loading models, checking accuracy for validation/testing etc.
     --"test.py" tests the model on 93 test images and outputs the accuracy for each class.
 
-"course_rating" handles 
+"course_rating" handles calculation for different course metrics such as green size, hole length etc.
+
+"user_interface" is a user interface for calculating metrics for a given course. The user interface uses files from "course_rating" to calculate the metrics.
 
 ## Tensorboard
 Tensorboard is used to visualize the train loss and validation loss.
