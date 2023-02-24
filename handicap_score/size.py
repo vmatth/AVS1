@@ -7,8 +7,9 @@ from distance import distance_two_points
 from operator import itemgetter
 import math
 import os
+import csv
 
-def get_distance_to_front_and_back_green(image, landing_point, green_centerpoint, scale, color='unet'):  
+def get_distance_to_front_and_back_green(image, landing_point, green_centerpoint, contour, scale, color='unet'):  
     px_length_cm = convert.get_px_side(image.shape)
     v = [landing_point[0]-green_centerpoint[0], landing_point[1]-green_centerpoint[1]]
     #Normalize the vector
@@ -18,17 +19,17 @@ def get_distance_to_front_and_back_green(image, landing_point, green_centerpoint
         v[0] /= mag
         v[1] /= mag
 
-    _, _, _, green, _ = get_class_coords(image, color)
-    green_contours, _ = cv2.findContours(green, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    #get distance from landing_zone to center of green
+    # _, _, _, green, _ = get_class_coords(image, color)
+    # green_contours, _ = cv2.findContours(green, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    # #get distance from landing_zone to center of green
     
-    area = 0
-    contour = 0
-    for cnt in green_contours:
-        temp_area = cv2.contourArea(cnt)
-        if temp_area > area:
-            area = temp_area
-            contour = cnt
+    # area = 0
+    # contour = 0
+    # for cnt in green_contours:
+    #     temp_area = cv2.contourArea(cnt)
+    #     if temp_area > area:
+    #         area = temp_area
+    #         contour = cnt
     min_dist = get_min_dist_cnt(contour, green_centerpoint, v, image, scale)
     min_dist.pop()
     distance_front_green = convert.convert_px_to_m(px_length_cm, np.linalg.norm(landing_point-min_dist[0]), scale)
@@ -112,9 +113,9 @@ def get_bunker_size(image, image_px_size, scale=1000, color='unet'):
 def get_green_size(image, color='unet', scale=1000):
     _, _, _, green, _ = get_class_coords(image, color)
 
-    if np.sum(green == 255) < 5:
+    if np.sum(green == 255) < 7:
         print("There is no green on this image")
-        return None, None, None
+        return None, None, None, None
 
     cv2.imshow("Image with green sizes", image)
     cv2.waitKey(0)
@@ -128,16 +129,38 @@ def get_green_size(image, color='unet', scale=1000):
     cv2.destroyAllWindows()
     cv2.imwrite("GreenEmpty.png", image)
 
+    
+    circularity = 0
+    contour = 0
+    contour_list = []
+    for cnt in contours:
+        temp_area = cv2.contourArea(cnt)
+        perimeter = cv2.arcLength(cnt, True)
+        #print("perimeter: ", perimeter)
+        if perimeter !=0:
+            temp_circularity = (4 * math.pi * temp_area) / perimeter**2
+            #print("circularity: ", temp_circularity)
+            if temp_circularity > circularity: # temp_area > area:
+                circularity = temp_circularity
+                # print("circularity: ", circularity)
+                contour_list.append(cnt)
+    #print("lenght contour list: ", len(contour_list))
 
     area = 0
-    contour = 0
-    for cnt in contours:
-        
+    for cnt in contour_list:
         temp_area = cv2.contourArea(cnt)
         if temp_area > area:
             area = temp_area
+            #print("area: ", area)
             contour = cnt
-            
+    #print("final contour: ", contour)
+
+    row=[circularity]
+    with open("circularity.csv", "a", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(row)
+        file.close()    
+
     length = get_max_dist_cnt(contour, image.shape, scale)
     ## Draw a diagonal blue line with thickness of 5 px
     # cv2.line(image, tuple(max_dist[0]), tuple(max_dist[1]),(255,0,255),1)
@@ -171,30 +194,30 @@ def get_green_size(image, color='unet', scale=1000):
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 
-    return length, width, mp
+    return length, width, mp, contour
 
 
 
-PATH = "C:\\Users\\Vini\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\saved_test_images\\"
-names = []
-def load_images_from_folder(path):
-    images = []
-    for filename in os.listdir(path):
-        #print("filename: ", filename)
-        img = cv2.imread(os.path.join(path,filename))
-        if img is not None:
-            images.append(img)
-            names.append(filename)
-        # return images
-    return images
+# PATH = "D:\\Users\\jacob\\Master\\Aalborg Universitet\\AVS1 - Golf Project - General\\1. Project\\3. Data\\saved_test_images_best_model\\"
+# names = []
+# def load_images_from_folder(path):
+#     images = []
+#     for filename in os.listdir(path):
+#         #print("filename: ", filename)
+#         img = cv2.imread(os.path.join(path,filename))
+#         if img is not None:
+#             images.append(img)
+#             names.append(filename)
+#         # return images
+#     return images
 
-counter = 1
-for image in load_images_from_folder(PATH):
-    if counter == 133:
-        print("Checking green for image [", counter, "]: ", names[counter-1])
-        max_dist, min_dist, mp = get_green_size(image, color='unet', scale=2000)
-        print(max_dist, min_dist, mp)
-    counter += 1
+# counter = 1
+# for image in load_images_from_folder(PATH):
+#     if counter == 133:
+#         print("Checking green for image [", counter, "]: ", names[counter-1])
+#         max_dist, min_dist, mp, _ = get_green_size(image, color='unet', scale=2000)
+#         print(max_dist, min_dist, mp)
+#     counter += 1
 
 
 

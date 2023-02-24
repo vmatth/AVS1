@@ -8,7 +8,7 @@ import convert
 from click import get_click_coords
 import draw_elipse
 import distance
-from size import get_green_size
+#from size import get_green_size
 import do_everything
 
 # Inputs the total length and carry length of a stroke in yards

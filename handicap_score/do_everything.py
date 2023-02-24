@@ -14,7 +14,7 @@ import csv
 
 
 
-def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint, scale, stroke_distance, carry_distance, player_type, pixel_size):
+def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint, scale, stroke_distance, carry_distance, player_type, pixel_size, contour,hole_name):
     center_point = point
     stroke_number = 1
     total_distance = 0
@@ -52,7 +52,12 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
 
             total_distance += distance.distance_two_points(point, landing_point, original.shape, scale)
             print(f"Total distance for {player_type}: {total_distance} [m]")
-            
+            with open("distance_calc_paper.csv", "a", newline="") as file:
+                    writer = csv.writer(file)
+                    writer.writerow([hole_name,int(total_distance)])
+                    file.close()
+
+
             original=draw_elipse.draw_elipse(original, landing_point, point, player_type, stroke_distance, scale)
             
             cv2.circle(original, landing_point, 1, (255, 255, 0))
@@ -83,14 +88,14 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
                 distance_to_green = stroke.get_distance_landing_point_to_hole(np.array(point), green_centerpoint, original.shape, scale)
                 lenght_of_hole = total_distance + distance_to_green
                 print(f"Total distance for {player_type}: {lenght_of_hole} [m]")
-                distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, point, green_centerpoint, scale, color="unet")
+                distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, point, green_centerpoint, contour, scale, color="unet")
                 print(f"distance to front green {distance_front_green} [m], distance to back green {distance_back_green} [m]")
                 
                 row = []
                 row.append(int(lenght_of_hole))
-                with open("distance_calc.csv", "a", newline="") as file:
+                with open("distance_calc_paper.csv", "a", newline="") as file:
                     writer = csv.writer(file)
-                    writer.writerow(row)
+                    writer.writerow([hole_name,row])
                     file.close()
 
 
@@ -98,14 +103,14 @@ def run_all_calcs(original,prediction, fairway_coords, point, green_centerpoint,
                 
                 distance_to_green = stroke.get_distance_landing_point_to_hole(np.array(center_point), green_centerpoint, original.shape, scale)
                 print(f"Total distance for {player_type}: {distance_to_green} [m]")
-                distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, np.array(center_point), green_centerpoint, scale, color="unet")
+                distance_front_green, distance_back_green = size.get_distance_to_front_and_back_green(prediction, np.array(center_point), green_centerpoint, contour, scale, color="unet")
                 print(f"distance to front green {distance_front_green} [m], distance to back green {distance_back_green} [m]")
             
                 row = []
                 row.append(int(distance_to_green))
-                with open("distance_calc.csv", "a", newline="") as file:
+                with open("distance_calc_paper.csv", "a", newline="") as file:
                     writer = csv.writer(file)
-                    writer.writerow(row)
+                    writer.writerow([hole_name, row])
                     file.close()
 
             break
