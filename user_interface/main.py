@@ -2,12 +2,9 @@ from tkinter import *
 import tkinter as tk
 from  tkinter import ttk
 import customtkinter as ctk
-import model_utils
-from tkinter import filedialog
 import cv2
 from PIL import Image
 from PIL import ImageTk
-import model_utils
 import numpy as np
 from get_classes import get_class_coords as gcc
 import select_image
@@ -15,7 +12,10 @@ import re
 
 import sys, os
 
-MY_PATH = '.\\AVS1'
+sys.path.append(os.getcwd())
+cd = os.getcwd()
+MY_PATH = os.path.join(cd, "course_rating")
+print("Looking for course_rating module in: ", MY_PATH)
 sys.path.append(MY_PATH)
 
 from course_rating import size
@@ -70,7 +70,7 @@ class App(ctk.CTk):
         self.male_tee = None
 
         # Load unet model
-        self.model = model_utils.load_model()
+        #self.model = model_utils.load_model()
 
         # Top bar frame for buttons on the top of the window
         self.topbar_frame = ctk.CTkFrame(self, corner_radius=0)
@@ -100,7 +100,7 @@ class App(ctk.CTk):
         self.bottombar_frame.grid_columnconfigure(3, weight=0)
 
         # Button for opening images
-        self.topbar_button1 = ctk.CTkButton(self.topbar_frame, text="Open", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda:self.show_prediction_image(self.model))
+        self.topbar_button1 = ctk.CTkButton(self.topbar_frame, text="Open", width=100, height=32, border_width=0, corner_radius=8,  anchor=tk.CENTER, font=button_font, command=lambda:self.show_prediction_image())
         self.topbar_button1.grid(padx=5, pady=10, row=0, column=1)
 
         # Button for selecting tees
@@ -194,8 +194,8 @@ class App(ctk.CTk):
         self.image_label.image = img      
 
     # Selects an image and predicts the segmentation mask using a model
-    def show_prediction_image(self, model):
-        PIL_image, self.current_image, self.mask_image = select_image.select_image(model) #Calculates the prediction image using the loaded model
+    def show_prediction_image(self):
+        PIL_image, self.current_image, self.mask_image = select_image.select_image() #Calculates the prediction image using the loaded model
         self.raw_image = self.current_image.copy() # Save the same image to both variables. (Current image will update with all of the circles and so on)
         self.update_information_label("Opening image.")
         self.measurements_ready = False # Reset the all_fairway_widths value when opening a new picture (this ensures that the measurements have to be be recalculated)

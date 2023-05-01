@@ -3,6 +3,7 @@ import segmentation_models_pytorch as smp
 from PIL import Image
 from torchvision import transforms
 import numpy as np
+import os
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -13,11 +14,11 @@ ENCODER_WEIGHTS= "imagenet"
 IMAGE_HEIGHT = 512 
 IMAGE_WIDTH = 832 
 
-MODEL_DIR = "saved_models/best_model.pth.tar"
+MODEL_DIR = os.path.expanduser('~') + "/AVS1/saved_models/best_model_3.pth.tar"
 
 # Loads the model with the "MODEL_DIR" path
 def load_model():
-    print("Loading model")
+    print("Loading model from: ", MODEL_DIR)
     try:
         # UNet Model
         model = smp.Unet(
@@ -32,12 +33,14 @@ def load_model():
         model.load_state_dict(m['model_state_dict'])
         model.eval()
 
+        print("Model succesfully loaded")
         return model
     except:
         raise Exception('Could not load model')
 
 # Predicts the image on "path" using the "model"
 def predict(path, model):
+    print("Predicting image using model")
     image = Image.open(path)
     trans = transforms.Compose([
         transforms.Resize([512, 832]),
@@ -63,6 +66,7 @@ def predict(path, model):
     transform = transforms.ToPILImage()
     image = transform(output)
     image = np.array(image)
+    print("Predicting succesful")
     return image
 
 

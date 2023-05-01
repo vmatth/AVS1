@@ -3,34 +3,36 @@ from tkinter import filedialog
 import cv2
 from PIL import Image
 from PIL import ImageTk
-import model_utils
 import numpy as np
 from get_classes import get_class_coords as gcc
+import customtkinter as ctk
 
-def select_image(model):
+def select_image():
     path = filedialog.askopenfilename()
     if len(path) > 0:
-        image = cv2.imread(path)
-        # Prediction image using the model
-        prediction = model_utils.predict(path, model)
-        prediction = cv2.cvtColor(prediction, cv2.COLOR_BGR2RGB)     
-        # Resize image to be the same as the prediction
-        image = cv2.resize(image, (model_utils.IMAGE_WIDTH, model_utils.IMAGE_HEIGHT))
-        
-        # Colors for each class
-        colors = [[0, 36, 250], [231, 200, 46], [77 ,156, 77], [122, 243, 142], [158, 246, 246]]
-        masks = gcc(prediction)
+        print("Opening image in: ", path)
 
-        # Draw contours for each class
-        for i, m in enumerate(masks):
-            if np.sum(m) > 0:
-                c, _  = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-                cv2.drawContours(image, c, -1, colors[i], 3)    
+        if('_prediction' in path):
+            pred_image = path
+            rgb_image = pred_image[:-14] + "image.png"
+            print("Found corresponding RGB image in: ", rgb_image)
+        elif('_image' in path):
+            rgb_image = path
+            pred_image = rgb_image[:-9] + "prediction.png"  
+            print("Found corresponding prediction image in: ", pred_image)     
+        else:
+            raise ValueError("Could not find _prediction or _image in filename")
+
+
+        rgb_image = cv2.imread(rgb_image)
+        pred_image = cv2.imread(pred_image)
+  
         # Convert to PhotoImage so Tkinter can display it
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
-        cv_image = image     
-        image = Image.fromarray(image)
-        image = ImageTk.PhotoImage(image)
+        rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB) 
+        pred_image = cv2.cvtColor(pred_image, cv2.COLOR_BGR2RGB) 
+   
+        PIL_image = Image.fromarray(rgb_image)
+        PIL_image = ImageTk.PhotoImage(PIL_image)
 
-        return image, cv_image, prediction #Returns the PIL image and the cv image
+        return PIL_image, rgb_image, pred_image #Returns the PIL image and the cv image
     raise ValueError("Could not open the selected image.")
