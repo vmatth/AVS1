@@ -11,11 +11,8 @@ import cv2
 import numpy as np
 from get_classes import get_class_coords as gcc
 
-IMAGE_NAME = "2__Soehoejlandet Golf ResortP_S_1000_02"
-IMAGE_DIR = os.path.expanduser('~') + "/AVS1/data/saved_test_images/2__Soehoejlandet Golf ResortP_S_1000_02.png"
-OUTPUT_DIR = os.path.expanduser('~') + "/prediction_images_output/"
-
-
+IMAGES_DIR = os.path.expanduser('~') + "/roldskov/" #The folder with all images to predict
+OUTPUT_DIR = os.path.expanduser('~') + "/prediction_images_output/" #Output folder where predicted images are saved
 
 #Runs the model on the image (using CUDA)
 #Saves images to output_path
@@ -50,11 +47,9 @@ def predict_image_cuda(model, img_name, path, output_path):
         for i, m in enumerate(masks):
             if np.sum(m) > 0:
                 c, _  = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-                cv2.drawContours(image, c, -1, colors[i], 3)    
+                cv2.drawContours(image, c, -1, colors[i], 3)
 
-        #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
-        #image = Image.fromarray(image)
-        #image = ImageTk.PhotoImage(image)
+        img_name = img_name[:-4] #Remove .jpg
 
         new_img_dir = output_path + img_name + "_image.png"
         new_prediction_dir = output_path + img_name + "_prediction.png"
@@ -69,7 +64,11 @@ def main():
     print("-----Predicting Image with CUDA-----")
     model = mu.load_model()
 
-    predict_image_cuda(model, IMAGE_NAME, IMAGE_DIR, OUTPUT_DIR)
+    images = os.listdir(IMAGES_DIR)
+    for file in images:
+        print("----------Predicting: ", file, "----------")
+        IMAGE_DIR = os.path.join(IMAGES_DIR, file)
+        predict_image_cuda(model, file, IMAGE_DIR, OUTPUT_DIR)
 
 if __name__ == "__main__":
     main()
